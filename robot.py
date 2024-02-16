@@ -1,12 +1,6 @@
-import math
-
 import wpilib as wp
-from wpimath.controller import PIDController
-import wpilib.drive
-from navx import AHRS
-import rev
 
-from DriveSubsystem import DriveSubsystem
+from subsystems.DriveSubsystem import DriveSubsystem
 from pilots import Driver, Operator
 
 

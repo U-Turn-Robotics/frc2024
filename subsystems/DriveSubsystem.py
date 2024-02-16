@@ -143,15 +143,13 @@ class DriveSubsystem:
 
         # get the magnitude of the joystick using atan2
         if self.driver.get_magnitude() > 0.9 and abs(speed) > 0.0:
-            wp.SmartDashboard.putNumber("speed", speed)
-
             setpoint_angle = self.driver.get_angle()
-            wp.SmartDashboard.putNumber("Setpoint angle", setpoint_angle)
 
             is_reversing = speed < 0
             if is_reversing:
                 setpoint_angle = rotate_180_degrees(setpoint_angle)
 
+            wp.SmartDashboard.putNumber("Setpoint angle", setpoint_angle)
             self.turn_controller.setSetpoint(setpoint_angle)
             turn_speed = self.turn_controller.calculate(self.angle)
             turn_speed = clamp(
