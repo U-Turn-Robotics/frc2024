@@ -1,33 +1,44 @@
-import math
-from navx import AHRS
 import rev
 import wpilib as wp
-from wpimath.kinematics import DifferentialDriveOdometry
-from wpimath.geometry import Pose2d, Rotation2d
 import wpilib.drive
+from commands2 import Subsystem
+from navx import AHRS
 from wpimath.controller import PIDController
+from wpimath.geometry import Pose2d
+from wpimath.kinematics import (
+    ChassisSpeeds,
+    DifferentialDriveOdometry,
+    DifferentialDriveWheelSpeeds,
+)
+from wpimath.units import (
+    radiansPerSecondToRotationsPerMinute,
+    rotationsPerMinuteToRadiansPerSecond,
+)
 
 import constants
 from pilots import Driver
 from utils.utils import clamp, rotate_180_degrees
 
 
-class DriveSubsystem:
+class DriveSubsystem(Subsystem):
     def __init__(self, driver: Driver):
         self.driver = driver
 
+        # left spark 1
         spark_l_1 = rev.CANSparkMax(
             constants.Drivetrain.k_left_motor1_port,
             rev.CANSparkMax.MotorType.kBrushless,
         )
         spark_l_1.restoreFactoryDefaults()
         spark_l_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        spark_l_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
         self.left_encoder = spark_l_1.getEncoder()
         self.left_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
-        spark_l_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        self.left_pid_controller = spark_l_1.getPIDController()
 
+        # left spark 2, follows left spark 1
         spark_l_2 = rev.CANSparkMax(
             constants.Drivetrain.k_left_motor2_port,
             rev.CANSparkMax.MotorType.kBrushless,
@@ -35,7 +46,9 @@ class DriveSubsystem:
         spark_l_2.restoreFactoryDefaults()
         spark_l_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         spark_l_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        spark_l_2.follow(spark_l_1)
 
+        # right spark 1
         spark_r_1 = rev.CANSparkMax(
             constants.Drivetrain.k_right_motor1_port,
             rev.CANSparkMax.MotorType.kBrushless,
@@ -47,7 +60,9 @@ class DriveSubsystem:
         self.right_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
+        self.right_pid_controller = spark_r_1.getPIDController()
 
+        # right spark 2, follows right spark 1
         spark_r_2 = rev.CANSparkMax(
             constants.Drivetrain.k_right_motor2_port,
             rev.CANSparkMax.MotorType.kBrushless,
@@ -55,11 +70,10 @@ class DriveSubsystem:
         spark_r_2.restoreFactoryDefaults()
         spark_r_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         spark_r_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        spark_r_2.follow(spark_r_1)
 
-        left = wp.MotorControllerGroup(spark_l_1, spark_l_2)
-        left.setInverted(True)
-        right = wp.MotorControllerGroup(spark_r_1, spark_r_2)
-        self.drivetrain = wpilib.drive.DifferentialDrive(left, right)
+        # initialize the drivetrain
+        self.drivetrain = wpilib.drive.DifferentialDrive(spark_l_1, spark_r_1)
 
         self.gyro = AHRS(wp.SPI.Port.kMXP, update_rate_hz=100)
 
@@ -95,6 +109,18 @@ class DriveSubsystem:
     def reset_gyro(self):
         self.gyro.zeroYaw()
 
+    def getPose(self):
+        return self.pose
+
+    def resetPose(self, pose: Pose2d):
+        self.pose = pose
+        self.odometry.resetPosition(
+            self.gyro.getRotation2d(),
+            self.right_encoder.getPosition(),
+            self.left_encoder.getPosition(),
+            self.pose,
+        )
+
     def periodic(self):
         # for calibrating encoder conversion factor
         wp.SmartDashboard.putNumber("Left Encoder", self.left_encoder.getPosition())
@@ -116,6 +142,39 @@ class DriveSubsystem:
 
         self.angle = self.get_angle()
         wp.SmartDashboard.putNumber("Gyro Angle", self.angle)
+
+    def getSpeeds(self):
+        leftRPM = self.left_encoder.getVelocity()
+        rightRPM = self.right_encoder.getVelocity()
+
+        leftAngularVel = rotationsPerMinuteToRadiansPerSecond(leftRPM)
+        rightAngularVel = rotationsPerMinuteToRadiansPerSecond(rightRPM)
+
+        leftLinearVel = leftAngularVel * constants.Drivetrain.kWheelRadiusMeters
+        rightLinearVel = rightAngularVel * constants.Drivetrain.kWheelRadiusMeters
+
+        return constants.Drivetrain.differential_drive_kinematics.toChassisSpeeds(
+            DifferentialDriveWheelSpeeds(leftLinearVel, rightLinearVel)
+        )
+
+    def setSpeeds(self, speeds: ChassisSpeeds):
+        wheelSpeeds = constants.Drivetrain.differential_drive_kinematics.toWheelSpeeds(
+            speeds
+        )
+        wheelSpeeds.desaturate(constants.Drivetrain.k_max_velocity)
+
+        leftAngularVel = wheelSpeeds.left / constants.Drivetrain.kWheelRadiusMeters
+        rightAngularVel = wheelSpeeds.right / constants.Drivetrain.kWheelRadiusMeters
+
+        leftRPM = radiansPerSecondToRotationsPerMinute(leftAngularVel)
+        rightRPM = radiansPerSecondToRotationsPerMinute(rightAngularVel)
+
+        self.left_pid_controller.setReference(
+            leftRPM, rev.CANSparkMax.ControlType.kVelocity
+        )
+        self.right_pid_controller.setReference(
+            rightRPM, rev.CANSparkMax.ControlType.kVelocity
+        )
 
     def drive(self):
         if self.driver_connected:

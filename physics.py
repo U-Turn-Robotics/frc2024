@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from pyfrc.physics.core import PhysicsEngine as Engine
 from pyfrc.physics.core import PhysicsInterface
+from wpilib import DriverStation
 from wpilib.simulation import AnalogGyroSim
 from wpimath.geometry import Pose2d, Rotation2d
 
@@ -10,20 +11,35 @@ if TYPE_CHECKING:
 
 
 class PhysicsEngine(Engine):
-    simGyro = AnalogGyroSim(0)
-
     def __init__(self, physics_controller: PhysicsInterface, robot: "Robot"):
         """Initialize the physics engine with the simulation interface"""
 
         self.robot = robot
         self.physics_controller = physics_controller
 
-        assert self.physics_controller.field is not None
-        self.physics_controller.field.setRobotPose(Pose2d(5, 5, Rotation2d(0)))
+        self.initial_pose_set = False
 
     def update_sim(self, now: float, tm_diff: float):
         """Called when the simulation parameters for the program need to be updated"""
 
-        assert self.physics_controller.field is not None
-        self.physics_controller.field.setRobotPose(Pose2d(5, 5, Rotation2d(0)))
-        self.simGyro.setAngle(90)
+        if DriverStation.isAutonomous():
+            if not self.initial_pose_set:
+                start_pose = self.robot.robot.loadAutoStartPose()
+
+                assert self.physics_controller.field is not None
+                self.physics_controller.field.setRobotPose(start_pose)
+                self.robot.robot.driveSubsystem.resetPose(start_pose)
+
+                self.initial_pose_set = True
+        elif DriverStation.isTest():
+            self.initial_pose_set = False
+
+        if DriverStation.isDisabled():
+            self.initial_pose_set = False
+        else:
+            chassis_speeds = self.robot.robot.driveSubsystem.getSpeeds()
+            pose = self.physics_controller.drive(chassis_speeds, tm_diff)
+
+            assert self.physics_controller.field is not None
+            self.physics_controller.field.setRobotPose(pose)
+            self.robot.robot.driveSubsystem.resetPose(pose)

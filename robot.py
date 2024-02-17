@@ -1,21 +1,36 @@
 import wpilib as wp
+from commands2 import CommandScheduler
 
-from subsystems.DriveSubsystem import DriveSubsystem
-from pilots import Driver, Operator
+import constants
+from RobotContainer import RobotContainer
 
 
 class Robot(wp.TimedRobot):
-    def robotInit(self):
-        driver = Driver()
-        self.drive = DriveSubsystem(driver)
+    def __init__(self):
+        super().__init__(constants.Robot.period)
 
-        # self.operator = wp.XboxController(1)
+    def robotInit(self):
+        self.robot = RobotContainer()
 
     def robotPeriodic(self):
-        self.drive.periodic()
+        CommandScheduler.getInstance().run()
 
-    def teleopInit(self):
+    def autonomousInit(self):
+        self.autoCommand = self.robot.getAutoCommand()
+
+        self.autoCommand.schedule()
+
+    def autonomousPeriodic(self):
         pass
 
+    def teleopInit(self):
+        self.autoCommand.cancel()
+
     def teleopPeriodic(self):
-        self.drive.drive()
+        pass
+
+    def testInit(self):
+        CommandScheduler.getInstance().cancelAll()
+
+    def testPeriodic(self):
+        pass

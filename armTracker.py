@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import ntcore
-import time
 import sys
+import time
 
+import ntcore
 
 args = sys.argv[1:]
 
