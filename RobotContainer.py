@@ -9,7 +9,7 @@ from pathplannerlib.geometry_util import flipFieldPose
 from wpilib import DriverStation
 
 import constants
-from pilots import Driver
+from pilots import Driver, Operator
 from subsystems.DriveSubsystem import DriveSubsystem
 
 
@@ -22,13 +22,13 @@ class RobotContainer:
             RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
         )
 
-        # self.operator = wp.XboxController(1)
+        self.operator = Operator()
 
         self.configureButtonBindings()
 
         self.configureAuto()
 
-        self.auto = self.loadAuto()
+        self.loadAuto()
 
     def configureButtonBindings(self):
         pass
@@ -57,11 +57,13 @@ class RobotContainer:
     def shouldFlipAuto(self):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
-    def loadAuto(self):
-        return PathPlannerAuto("Auto-1")
+    def loadAuto(self, auto_name: str):
+        self.auto = PathPlannerAuto(auto_name)
+        self.autoSelected = auto_name
+        print(f"Auto loaded: {auto_name}")
 
-    def loadAutoStartPose(self):
-        start_pose = PathPlannerAuto.getStartingPoseFromAutoFile("Auto-1")
+    def loadAutoStartPose(self, auto_name: str):
+        start_pose = PathPlannerAuto.getStartingPoseFromAutoFile(auto_name)
         return flipFieldPose(start_pose) if self.shouldFlipAuto() else start_pose
 
     def getAutoCommand(self):

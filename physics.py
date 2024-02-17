@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING
 from pyfrc.physics.core import PhysicsEngine as Engine
 from pyfrc.physics.core import PhysicsInterface
 from wpilib import DriverStation
-from wpilib.simulation import AnalogGyroSim
-from wpimath.geometry import Pose2d, Rotation2d
 
 if TYPE_CHECKING:
     from robot import Robot
@@ -24,7 +22,9 @@ class PhysicsEngine(Engine):
 
         if DriverStation.isAutonomous():
             if not self.initial_pose_set:
-                start_pose = self.robot.robot.loadAutoStartPose()
+                start_pose = self.robot.robot.loadAutoStartPose(
+                    self.robot.robot.autoSelected
+                )
 
                 assert self.physics_controller.field is not None
                 self.physics_controller.field.setRobotPose(start_pose)
