@@ -11,7 +11,7 @@ class Pilots:
 
 
 class Drivetrain:
-    speed_scale = 0.2
+    speed_scale = 1
 
     k_left_motor1_port = 2
     k_left_motor2_port = 3
