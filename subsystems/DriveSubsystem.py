@@ -32,11 +32,12 @@ class DriveSubsystem(Subsystem):
         spark_l_1.restoreFactoryDefaults()
         spark_l_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         spark_l_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        spark_l_1.setInverted(True)
         self.left_encoder = spark_l_1.getEncoder()
         self.left_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
-        self.left_pid_controller = spark_l_1.getPIDController()
+        self.l_1_pid_controller = spark_l_1.getPIDController()
 
         # left spark 2, follows left spark 1
         spark_l_2 = rev.CANSparkMax(
@@ -46,7 +47,8 @@ class DriveSubsystem(Subsystem):
         spark_l_2.restoreFactoryDefaults()
         spark_l_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         spark_l_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        spark_l_2.follow(spark_l_1)
+        spark_l_2.setInverted(True)
+        self.l_2_pid_controller = spark_l_2.getPIDController()
 
         # right spark 1
         spark_r_1 = rev.CANSparkMax(
@@ -60,7 +62,7 @@ class DriveSubsystem(Subsystem):
         self.right_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
-        self.right_pid_controller = spark_r_1.getPIDController()
+        self.r_1_pid_controller = spark_r_1.getPIDController()
 
         # right spark 2, follows right spark 1
         spark_r_2 = rev.CANSparkMax(
@@ -70,10 +72,12 @@ class DriveSubsystem(Subsystem):
         spark_r_2.restoreFactoryDefaults()
         spark_r_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         spark_r_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        spark_r_2.follow(spark_r_1)
+        self.r_2_pid_controller = spark_r_2.getPIDController()
 
         # initialize the drivetrain
-        self.drivetrain = wpilib.drive.DifferentialDrive(spark_l_1, spark_r_1)
+        left = wpilib.MotorControllerGroup(spark_l_1, spark_l_2)
+        right = wpilib.MotorControllerGroup(spark_r_1, spark_r_2)
+        self.drivetrain = wpilib.drive.DifferentialDrive(left, right)
 
         self.gyro = AHRS(wp.SPI.Port.kMXP, update_rate_hz=100)
 
@@ -169,10 +173,16 @@ class DriveSubsystem(Subsystem):
         leftRPM = radiansPerSecondToRotationsPerMinute(leftAngularVel)
         rightRPM = radiansPerSecondToRotationsPerMinute(rightAngularVel)
 
-        self.left_pid_controller.setReference(
+        self.l_1_pid_controller.setReference(
             leftRPM, rev.CANSparkMax.ControlType.kVelocity
         )
-        self.right_pid_controller.setReference(
+        self.l_2_pid_controller.setReference(
+            leftRPM, rev.CANSparkMax.ControlType.kVelocity
+        )
+        self.r_1_pid_controller.setReference(
+            rightRPM, rev.CANSparkMax.ControlType.kVelocity
+        )
+        self.r_2_pid_controller.setReference(
             rightRPM, rev.CANSparkMax.ControlType.kVelocity
         )
 
