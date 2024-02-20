@@ -1,21 +1,16 @@
 from commands2 import InstantCommand, RunCommand
-from pathplannerlib.auto import (
-    AutoBuilder,
-    NamedCommands,
-    PathPlannerAuto,
-    ReplanningConfig,
-)
+from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
 from wpilib import DriverStation
 
 import constants
+from AutoSelector import AutoSelector
 from pilots import Driver, Operator
 from subsystems.DriveSubsystem import DriveSubsystem
 
 
 class RobotContainer:
     def __init__(self) -> None:
-
         self.driver = Driver()
         self.driveSubsystem = DriveSubsystem(self.driver)
         self.driveSubsystem.setDefaultCommand(
@@ -27,8 +22,7 @@ class RobotContainer:
         self.configureButtonBindings()
 
         self.configureAuto()
-
-        self.loadAuto()
+        self.startingPose = None
 
     def configureButtonBindings(self):
         pass
@@ -54,17 +48,16 @@ class RobotContainer:
             self.driveSubsystem,
         )
 
+        self.autoSelector = AutoSelector()
+
     def shouldFlipAuto(self):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
-    def loadAuto(self, auto_name: str):
-        self.auto = PathPlannerAuto(auto_name)
-        self.autoSelected = auto_name
-        print(f"Auto loaded: {auto_name}")
-
-    def loadAutoStartPose(self, auto_name: str):
-        start_pose = PathPlannerAuto.getStartingPoseFromAutoFile(auto_name)
-        return flipFieldPose(start_pose) if self.shouldFlipAuto() else start_pose
-
     def getAutoCommand(self):
-        return self.auto
+        (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
+        print(f"Starting pose: {self.startingPose}")
+        if self.startingPose:
+            if self.shouldFlipAuto():
+                self.startingPose = flipFieldPose(self.startingPose)
+            self.driveSubsystem.resetPose(self.startingPose)
+        return auto

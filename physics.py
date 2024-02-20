@@ -22,13 +22,12 @@ class PhysicsEngine(Engine):
 
         if DriverStation.isAutonomous():
             if not self.initial_pose_set:
-                start_pose = self.robot.robot.loadAutoStartPose(
-                    self.robot.robot.autoSelected
-                )
+                start_pose = self.robot.robot.startingPose
 
-                assert self.physics_controller.field is not None
-                self.physics_controller.field.setRobotPose(start_pose)
-                self.robot.robot.driveSubsystem.resetPose(start_pose)
+                if start_pose is not None:
+                    assert self.physics_controller.field is not None
+                    self.physics_controller.field.setRobotPose(start_pose)
+                    self.robot.robot.driveSubsystem.resetPose(start_pose)
 
                 self.initial_pose_set = True
         elif DriverStation.isTest():
