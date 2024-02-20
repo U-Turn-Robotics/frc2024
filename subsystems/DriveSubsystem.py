@@ -176,6 +176,9 @@ class DriveSubsystem(Subsystem):
             rightRPM, rev.CANSparkMax.ControlType.kVelocity
         )
 
+        # prevents "Error at frc::MotorSafety::Check: A timeout has been exceeded: DifferentialDrive... Output not updated often enough."
+        self.drivetrain.feed()
+
     def drive(self):
         if self.driver_connected:
             if self.driver.get_toggle_field_oriented():
