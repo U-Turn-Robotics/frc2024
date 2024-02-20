@@ -1,3 +1,9 @@
+import math
+
+from wpimath.kinematics import DifferentialDriveKinematics
+from wpimath.units import inchesToMeters
+
+
 class Pilots:
     k_driver_controller_port = 0
     k_operator_controller_port = 1
@@ -10,18 +16,12 @@ class Pilots:
     controller_deadzone = 0.07
 
 
-import math
-
-from wpimath.kinematics import DifferentialDriveKinematics
-from wpimath.units import inchesToMeters
-
-
 class NeoConstants:
     k_units_per_revolution = 42
 
 
 class Drivetrain:
-    speed_scale = 0.2
+    speed_scale = 1
 
     k_left_motor1_port = 2
     k_left_motor2_port = 3
@@ -72,4 +72,6 @@ class Robot:
 # k_launch_feeder_speed = 1
 # k_intake_launcher_speed = -1
 # k_intake_feeder_speed = -0.2
+# k_launcher_delay = 1
+# k_launcher_delay = 1
 # k_launcher_delay = 1

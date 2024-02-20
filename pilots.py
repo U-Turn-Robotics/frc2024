@@ -8,7 +8,8 @@ from utils.utils import calcAxisSpeedWithCurvatureAndDeadzone, dz, rotate_90_deg
 
 class Driver:
     def __init__(self):
-        self._controller = wp.PS4Controller(constants.Pilots.k_driver_controller_port)
+        # self._controller = wp.PS4Controller(constants.Pilots.k_driver_controller_port)
+        self._controller = wp.XboxController(constants.Pilots.k_driver_controller_port)
 
     def is_connected(self):
         return self._controller.isConnected()
@@ -35,13 +36,16 @@ class Driver:
         return calcAxisSpeedWithCurvatureAndDeadzone(self._controller.getRightX())
 
     def get_speed(self):
-        return dz(self._controller.getR2Axis() - self._controller.getL2Axis(), 0.08)
+        # return dz(self._controller.getR2Axis() - self._controller.getL2Axis(), 0.08)
+        return dz(self._controller.getRightTriggerAxis() - self._controller.getLeftTriggerAxis(), 0.08)
 
     def get_toggle_field_oriented(self):
-        return self._controller.getSquareButtonPressed()
+        # return self._controller.getSquareButtonPressed()
+        return self._controller.getXButtonPressed()
 
     def get_reset_angle(self):
-        return self._controller.getTriangleButtonPressed()
+        # return self._controller.getTriangleButtonPressed()
+        return self._controller.getYButtonPressed()
 
 
 class Operator:
