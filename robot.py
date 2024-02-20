@@ -9,6 +9,8 @@ class Robot(wp.TimedRobot):
     def __init__(self):
         super().__init__(constants.Robot.period)
 
+        self.autoCommand = None
+
     def robotInit(self):
         self.robot = RobotContainer()
 
@@ -24,7 +26,8 @@ class Robot(wp.TimedRobot):
         pass
 
     def teleopInit(self):
-        self.autoCommand.cancel()
+        if self.autoCommand:
+            self.autoCommand.cancel()
 
     def teleopPeriodic(self):
         pass
