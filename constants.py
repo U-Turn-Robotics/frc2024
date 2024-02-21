@@ -62,6 +62,31 @@ class Robot:
     period = 0.02
 
 
+class Arm:
+    k_motor_id = 6
+
+    # TODO: Tune all
+    k_p = 0.1
+    k_i = 0
+    k_d = 0
+    # k_ff = 0
+
+    k_s = 0.7
+    k_g = 0.1
+    k_v = 0.1
+    k_a = 0.01
+
+    k_position_up = 0
+    k_position_down = 0
+
+
+class Shooter:
+    k_motor_1_id = 6
+    k_motor_2_id = 7
+
+    k_shoot_speed = 1
+
+
 # # Launcher
 # k_feeder_motor = 5
 # k_launcher_motor = 6

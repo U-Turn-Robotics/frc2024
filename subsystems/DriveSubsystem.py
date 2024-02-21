@@ -193,7 +193,7 @@ class DriveSubsystem(Subsystem):
             else:
                 self.drivetrain.arcadeDrive(
                     self.driver.get_arcade_drive_speed(),
-                    self.driver.get__arcade_drive_rotation(),
+                    self.driver.get_arcade_drive_rotation(),
                     squareInputs=False,
                 )
         else:

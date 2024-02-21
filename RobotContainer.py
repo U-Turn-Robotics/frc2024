@@ -7,11 +7,13 @@ import constants
 from AutoSelector import AutoSelector
 from pilots import Driver, Operator
 from subsystems.DriveSubsystem import DriveSubsystem
+from subsystems.ShooterSubsystem import ShooterSubsystem
 
 
 class RobotContainer:
     def __init__(self) -> None:
         self.driver = Driver()
+
         self.driveSubsystem = DriveSubsystem(self.driver)
         self.driveSubsystem.setDefaultCommand(
             RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
@@ -19,13 +21,23 @@ class RobotContainer:
 
         self.operator = Operator()
 
+        self.shooterSubsystem = ShooterSubsystem()
+        self.shooterSubsystem.setDefaultCommand(
+            RunCommand(
+                lambda: self.shooterSubsystem.setSpeed(self.operator.get_shoot_speed()),
+                self.shooterSubsystem,
+            )
+        )
+
         self.configureButtonBindings()
 
         self.configureAuto()
         self.startingPose = None
 
     def configureButtonBindings(self):
-        pass
+        self.operator.get_shoot_trigger().whileTrue(
+            RunCommand(lambda: self.shooterSubsystem.shoot())
+        )
 
     def configureAuto(self):
         NamedCommands.registerCommand(
