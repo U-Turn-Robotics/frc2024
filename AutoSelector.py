@@ -10,7 +10,7 @@ from wpimath.geometry import Pose2d
 class AutoSelector:
     def __init__(self):
         self.autoSelector = wp.SendableChooser()
-        autos = self._findAutos()
+        autos = AutoSelector._findAutos()
 
         # TODO make a better way to find the default auto
         # by getting the pose of the robot from the camera as it's disabled, use the auto with the closest starting pose
@@ -26,6 +26,7 @@ class AutoSelector:
 
         self.lastAutoSelected = None
 
+    @staticmethod
     def _findAutos() -> typing.Dict[str, typing.Tuple[Pose2d, PathPlannerAuto]]:
         autosPath = os.path.join(wp.getDeployDirectory(), "pathplanner", "autos")
 
