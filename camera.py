@@ -6,7 +6,7 @@ from wpimath.kinematics import ChassisSpeeds
 
 
 class AprilTagCamera:
-    def __init__(self) -> None:
+    def __init__(self):
         self.camera = PhotonCamera("photonvision")
 
         aprilTagField = robotpy_apriltag.loadAprilTagLayoutField(
@@ -28,14 +28,19 @@ class AprilTagCamera:
 
         velocityThreshold = 4
         if robotSpeeds.vx > velocityThreshold or robotSpeeds.vy > velocityThreshold:
-            return None
+            return (None, None)
 
         cameraResult = self.camera.getLatestResult()
 
         # check if the pose is good enough
         # the criteria could be based on the robots velocity, distance to nearest target
         if not cameraResult.hasTargets():
-            return None
+            return (None, None)
+
+        latencyThreshold = 100
+        if cameraResult.getLatencyMillis() > latencyThreshold:
+            return (None, None)
+
         nearestTarget = None
         for target in cameraResult.getTargets():
             if nearestTarget is None:
@@ -46,6 +51,6 @@ class AprilTagCamera:
 
         areaThreshold = 0.1
         if nearestTarget.getArea() < areaThreshold:
-            return None
+            return (None, None)
 
-        return self.poseEstimator.update(cameraResult)
+        return (self.poseEstimator.update(cameraResult), cameraResult.getTimestamp())

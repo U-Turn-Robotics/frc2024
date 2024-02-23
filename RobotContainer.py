@@ -7,12 +7,15 @@ import constants
 from AutoSelector import AutoSelector
 from pilots import Driver, Operator
 from subsystems.DriveSubsystem import DriveSubsystem
+from camera import AprilTagCamera
 
 
 class RobotContainer:
     def __init__(self) -> None:
+        self.aprilTagCamera = AprilTagCamera()
+
         self.driver = Driver()
-        self.driveSubsystem = DriveSubsystem(self.driver)
+        self.driveSubsystem = DriveSubsystem(self.driver, self.aprilTagCamera)
         self.driveSubsystem.setDefaultCommand(
             RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
         )
