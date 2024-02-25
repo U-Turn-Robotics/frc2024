@@ -3,26 +3,29 @@ import wpilib as wp
 import wpilib.drive
 from commands2 import Subsystem
 from navx import AHRS
-from wpimath.controller import PIDController
 from wpimath.geometry import Pose2d
+from wpimath.controller import PIDController
 from wpimath.kinematics import (
     ChassisSpeeds,
-    DifferentialDriveOdometry,
     DifferentialDriveWheelSpeeds,
 )
+from wpimath.estimator import DifferentialDrivePoseEstimator
 from wpimath.units import (
     radiansPerSecondToRotationsPerMinute,
     rotationsPerMinuteToRadiansPerSecond,
 )
+import math
 
 import constants
 from pilots import Driver
 from utils.utils import clamp, rotate_180_degrees
+from camera import AprilTagCamera
 
 
 class DriveSubsystem(Subsystem):
-    def __init__(self, driver: Driver):
+    def __init__(self, driver: Driver, aprilTagCamera: AprilTagCamera):
         self.driver = driver
+        self.aprilTagCamera = aprilTagCamera
 
         # left spark 1
         spark_l_1 = rev.CANSparkMax(
@@ -99,11 +102,15 @@ class DriveSubsystem(Subsystem):
         wp.SmartDashboard.putData("Field", self.field)
 
         self.pose = Pose2d(angle=0, x=0, y=0)
-        self.odometry = DifferentialDriveOdometry(
+        self.poseEstimator = DifferentialDrivePoseEstimator(
+            constants.Drivetrain.differential_drive_kinematics,
             self.pose.rotation(),
             self.left_encoder.getPosition(),
             self.left_encoder.getPosition(),
-            initialPose=self.pose,
+            self.pose,
+            # TODO tune these, these are the default values
+            (0.05, 0.05, math.radians(5)),
+            (0.5, 0.5, math.radians(30)),
         )
         self.field.setRobotPose(self.pose)
 
@@ -118,7 +125,7 @@ class DriveSubsystem(Subsystem):
 
     def resetPose(self, pose: Pose2d):
         self.pose = pose
-        self.odometry.resetPosition(
+        self.poseEstimator.resetPosition(
             self.gyro.getRotation2d(),
             self.right_encoder.getPosition(),
             self.left_encoder.getPosition(),
@@ -130,11 +137,17 @@ class DriveSubsystem(Subsystem):
         wp.SmartDashboard.putNumber("Left Encoder", self.left_encoder.getPosition())
         wp.SmartDashboard.putNumber("Right Encoder", self.right_encoder.getPosition())
 
-        self.pose = self.odometry.update(
+        self.pose = self.poseEstimator.update(
             self.gyro.getRotation2d(),
             self.right_encoder.getPosition(),
             self.left_encoder.getPosition(),
         )
+
+        (estimatedPose, timestamp) = self.aprilTagCamera.getEstimatedPose(
+            self.pose, self.getSpeeds()
+        )
+        if estimatedPose is not None:
+            self.poseEstimator.addVisionMeasurement(estimatedPose, timestamp)
 
         wp.SmartDashboard.putNumber("Meters X", self.pose.x)
         wp.SmartDashboard.putNumber("Meters Y", self.pose.y)

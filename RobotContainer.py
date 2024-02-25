@@ -5,6 +5,7 @@ from wpilib import DriverStation
 
 import constants
 from AutoSelector import AutoSelector
+from camera import AprilTagCamera
 from pilots import Driver, Operator
 from subsystems.DriveSubsystem import DriveSubsystem
 from subsystems.ShooterSubsystem import ShooterSubsystem
@@ -12,9 +13,10 @@ from subsystems.ShooterSubsystem import ShooterSubsystem
 
 class RobotContainer:
     def __init__(self) -> None:
-        self.driver = Driver()
+        self.aprilTagCamera = AprilTagCamera()
 
-        self.driveSubsystem = DriveSubsystem(self.driver)
+        self.driver = Driver()
+        self.driveSubsystem = DriveSubsystem(self.driver, self.aprilTagCamera)
         self.driveSubsystem.setDefaultCommand(
             RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
         )
