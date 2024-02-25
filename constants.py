@@ -69,15 +69,26 @@ class Arm:
     k_p = 0.1
     k_i = 0
     k_d = 0
-    # k_ff = 0
 
-    k_s = 0.7
-    k_g = 0.1
-    k_v = 0.1
-    k_a = 0.01
+    k_max_velocity = 1000
+    k_max_acceleration = 500
 
-    k_position_up = 0
-    k_position_down = 0
+    k_s = 1.0
+    k_g = 9.65
+    k_v = 0.94
+    k_a = 0.7
+
+    k_position_initial = math.radians(45)
+    k_position_up = math.radians(80)
+    k_position_down = math.radians(0)
+    k_position_offset = k_position_initial
+
+    k_gear_reduction = 48
+    k_encoder_pulses_per_revolution = (
+        NeoConstants.k_units_per_revolution * k_gear_reduction
+    )
+    k_encoder_position_per_degree = k_encoder_pulses_per_revolution / 360
+    k_encoder_position_per_radian = math.radians(k_encoder_position_per_degree)
 
 
 class Shooter:
