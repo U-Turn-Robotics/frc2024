@@ -87,6 +87,11 @@ class Shooter:
     k_shoot_speed = 1
 
 
+class Pickup:
+    k_motor_id = 8
+    k_pickup_speed = 1
+
+
 # # Launcher
 # k_feeder_motor = 5
 # k_launcher_motor = 6

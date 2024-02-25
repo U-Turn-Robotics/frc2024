@@ -1,21 +1,17 @@
-from commands2 import Subsystem
 import rev
-from constants import Arm
+from commands2 import Subsystem
+
+import constants
 
 
 class PickupSubsystem(Subsystem):
     def __init__(self):
         super().__init__()
 
-        self.motor = rev.CANSparkMax()
-        self.motorPID = self.motor.getPIDController()
-        self.motorPID.setP(Arm.k_p)
-        self.motorPID.setI(Arm.k_i)
-        self.motorPID.setD(Arm.k_d)
+        self.motor = rev.CANSparkMax(constants.Pickup.k_motor_id)
 
-        self.lastPosition = 0
+    def pickup(self):
+        self.motor.set(constants.Pickup.k_pickup_speed)
 
-    def periodic(self):
-        self.motorPID.setReference(
-            self.lastPosition, rev.CANSparkMax.ControlType.kSmartMotion
-        )
+    def stop(self):
+        self.motor.set(0)
