@@ -2,6 +2,7 @@ import math
 
 import wpilib as wp
 from commands2.button import CommandXboxController
+
 import constants
 from utils.utils import calcAxisSpeedWithCurvatureAndDeadzone, dz, rotate_90_degrees_ccw
 
@@ -69,3 +70,6 @@ class Operator:
         return (
             self.controller.getRightTriggerAxis() - self.controller.getLeftTriggerAxis()
         )
+    
+    def get_pickup_trigger(self):
+        return self.controller.b()

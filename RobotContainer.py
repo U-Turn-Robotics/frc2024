@@ -1,4 +1,4 @@
-from commands2 import InstantCommand, RunCommand
+from commands2 import InstantCommand, RunCommand, StartEndCommand
 from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
 from wpilib import DriverStation
@@ -7,7 +7,10 @@ import constants
 from AutoSelector import AutoSelector
 from camera import AprilTagCamera
 from pilots import Driver, Operator
+from subsystems.ArmSubsystem import ArmSubsystem
+from subsystems.ConveyorSubsystem import ConveyorSubsystem
 from subsystems.DriveSubsystem import DriveSubsystem
+from subsystems.PickupSubsystem import PickupSubsystem
 from subsystems.ShooterSubsystem import ShooterSubsystem
 
 
@@ -23,30 +26,52 @@ class RobotContainer:
 
         self.operator = Operator()
 
+        self.pickupSubsystem = PickupSubsystem()
+        self.pickupSubsystem.setDefaultCommand(self.pickupSubsystem.stop)
+        self.conveyorSubsystem = ConveyorSubsystem()
+        self.conveyorSubsystem.setDefaultCommand(self.conveyorSubsystem.stop)
         self.shooterSubsystem = ShooterSubsystem()
-        self.shooterSubsystem.setDefaultCommand(
-            RunCommand(
-                lambda: self.shooterSubsystem.setSpeed(self.operator.get_shoot_speed()),
-                self.shooterSubsystem,
-            )
-        )
+        self.shooterSubsystem.setDefaultCommand(self.shooterSubsystem.stop)
+        self.armSubsystem = ArmSubsystem()
+
+        self.configureCommands()
 
         self.configureButtonBindings()
 
         self.configureAuto()
         self.startingPose = None
 
-    def configureButtonBindings(self):
-        self.operator.get_shoot_trigger().whileTrue(
-            RunCommand(lambda: self.shooterSubsystem.shoot())
+    def configureCommands(self):
+        self.shootCommand = (
+            RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem)
+            .withTimeout(0.5)
+            .andThen(
+                StartEndCommand(
+                    self.conveyorSubsystem.convey,
+                    self.conveyorSubsystem.stop,
+                    self.conveyorSubsystem,
+                )
+            )
         )
+
+        self.pickupCommand = RunCommand(
+            self.pickupSubsystem.pickup, self.pickupSubsystem
+        )
+
+    def configureButtonBindings(self):
+        self.operator.get_shoot_trigger().whileTrue(self.shootCommand)
+        self.operator.get_pickup_trigger().whileTrue(self.pickupCommand)
 
     def configureAuto(self):
         NamedCommands.registerCommand(
-            "shoot", InstantCommand(lambda: print("shoot tested!!!"))
+            "shoot",
+            self.shootCommand.andThen(InstantCommand(lambda: print("shoot tested!!!"))),
         )
         NamedCommands.registerCommand(
-            "pickup", InstantCommand(lambda: print("pickup tested!!!"))
+            "pickup",
+            self.pickupCommand.andThen(
+                InstantCommand(lambda: print("pickup tested!!!"))
+            ),
         )
 
         AutoBuilder.configureLTV(

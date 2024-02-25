@@ -86,22 +86,10 @@ class Shooter:
 
     k_shoot_speed = 1
 
+    # TODO tune
+    k_shooter_ready_velocity = 4
+
 
 class Pickup:
     k_motor_id = 8
     k_pickup_speed = 1
-
-
-# # Launcher
-# k_feeder_motor = 5
-# k_launcher_motor = 6
-# k_launcher_current_limit = 80
-# k_feed_current_limit = 80
-
-# k_launcher_speed = 1
-# k_launch_feeder_speed = 1
-# k_intake_launcher_speed = -1
-# k_intake_feeder_speed = -0.2
-# k_launcher_delay = 1
-# k_launcher_delay = 1
-# k_launcher_delay = 1
