@@ -53,6 +53,9 @@ class Driver:
         return self._controller.start()
 
     def getVisionTrack(self):
+        return self._controller._hid.getAButton()
+
+    def getSnapToClosestPresetPose(self):
         return self._controller._hid.getBButton()
 
 

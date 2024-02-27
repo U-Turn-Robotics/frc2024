@@ -1,12 +1,10 @@
-import math
-
 import robotpy_apriltag
 from photonlibpy.photonCamera import PhotonCamera
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
 from wpimath.geometry import Pose2d, Rotation3d, Transform3d, Translation3d
 from wpimath.kinematics import ChassisSpeeds
 
-import PhotonUtils
+import utils.PhotonUtils as PhotonUtils
 
 
 class AprilTagCamera:
@@ -29,6 +27,9 @@ class AprilTagCamera:
 
     def getEstimatedPose(self, referencePose: Pose2d, robotSpeeds: ChassisSpeeds):
         self.poseEstimator.referencePose = referencePose
+
+        if not self.camera.isConnected():
+            return (None, None)
 
         velocityThreshold = 4
         if robotSpeeds.vx > velocityThreshold or robotSpeeds.vy > velocityThreshold:
@@ -65,6 +66,9 @@ class NoteTrackerCamera:
         self.camera.setDriverMode(True)
 
     def getNotePosition(self):
+        if not self.camera.isConnected():
+            return (None, None)
+
         res = self.camera.getLatestResult()
 
         if res.hasTargets():

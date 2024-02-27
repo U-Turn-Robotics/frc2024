@@ -1,3 +1,8 @@
+from typing import List
+
+from wpimath.geometry import Pose2d
+
+
 import constants
 
 
@@ -10,7 +15,7 @@ def dz(x: float, dz=constants.Pilots.controller_deadzone):
     return x if abs(x) > dz else 0
 
 
-def clamp(min: float, value: float, max: float) -> float:
+def clamp(value: float, min: float, max: float) -> float:
     if value < min:
         return min
     if value > max:
@@ -56,3 +61,14 @@ def calcAxisSpeedWithCurvatureAndDeadzone(
         return 0.0
     sign = sgn(x)
     return abs(x**c) * sign * (1 - b) + b * sign
+
+
+def findClosestPose(pose: Pose2d, poses: List[Pose2d]):
+    closestPose = None
+    closestDistance = float("inf")
+    for p in poses:
+        distance = pose.translation().distance(p.translation())
+        if distance < closestDistance:
+            closestDistance = distance
+            closestPose = p
+    return closestPose

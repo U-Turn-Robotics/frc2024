@@ -3,8 +3,9 @@ import math
 import rev
 import wpilib as wp
 import wpilib.drive
-from commands2 import Subsystem
+from commands2 import InstantCommand, Subsystem
 from navx import AHRS
+from pathplannerlib.auto import AutoBuilder, PathConstraints
 from wpimath.controller import PIDController
 from wpimath.estimator import DifferentialDrivePoseEstimator
 from wpimath.geometry import Pose2d
@@ -17,7 +18,7 @@ from wpimath.units import (
 import constants
 from camera import AprilTagCamera, NoteTrackerCamera
 from pilots import Driver
-from utils.utils import clamp, rotate_180_degrees
+from utils.utils import clamp, findClosestPose, rotate_180_degrees
 
 
 class DriveSubsystem(Subsystem):
@@ -131,6 +132,8 @@ class DriveSubsystem(Subsystem):
         )
         self.field.setRobotPose(self.pose)
 
+        self.pathfindCommand = None
+
     def getAngle(self):
         return self.gyro.getYaw()
 
@@ -238,6 +241,9 @@ class DriveSubsystem(Subsystem):
         speed = 0.0
         turnSpeed = 0.0
         squareInputs = True
+
+        isVisionTracking = False
+
         if self.driver_connected:
             if self.field_oriented:
                 (speed, turnSpeed) = self.fieldOrientedDrive()
@@ -245,11 +251,19 @@ class DriveSubsystem(Subsystem):
                 (speed, turnSpeed) = self.arcadeDrive()
 
             if speed == 0.0:
-                if self.driver.getVisionTrack():
-                    # self.noteTrackerCamera.enableTracking()
-                    (speed, turnSpeed) = self.visionTrack()
-                # else:
-                #     self.noteTrackerCamera.disableTracking()
+                if self.driver.getTrackNoteGamePiece():
+                    (speed, turnSpeed) = self.visionTrackNote()
+                    isVisionTracking = True
+                else:
+                    if self.driver.getSnapToClosestPresetPose():
+                        self.snapToClosestPresetPose()
+                        # skip the arcade drive since pathfinding handles the driving
+                        return
+                    else:
+                        self.resetPathfindCommand()
+
+        if not isVisionTracking:
+            self.noteTrackerCamera.disableTracking()
 
         self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
 
@@ -264,8 +278,7 @@ class DriveSubsystem(Subsystem):
         speed = self.driver.getSpeed()
         turnSpeed = 0.0
 
-        # get the magnitude of the joystick using atan2
-        if self.driver.getMagnitude() > 0.9 and abs(speed) > 0.0:
+        if self.driver.getMagnitude() > 0.8:
             setpointAngle = self.driver.getAngle()
 
             is_reversing = speed < 0.0
@@ -277,15 +290,14 @@ class DriveSubsystem(Subsystem):
             # # wait for the turn controller to be on target before moving
             # if not self.turn_controller.atSetpoint():
             #     speed = 0
-        else:
-            speed = 0.0
 
         return (-speed * constants.Drivetrain.speed_scale, turnSpeed)
 
-    def visionTrack(self):
+    def visionTrackNote(self):
+        self.noteTrackerCamera.enableTracking()
+
         speed = 0.0
         turnSpeed = 0.0
-        # self.noteTrackerCamera.enableTracking()
         (angle, area) = self.noteTrackerCamera.getNotePosition()
         if angle and area:
             turnSpeed = -self.vision_turn_controller.calculate(angle, 0)
@@ -293,13 +305,38 @@ class DriveSubsystem(Subsystem):
 
         return (speed, turnSpeed)
 
+    def snapToClosestPresetPose(self):
+        if self.pathfindCommand:
+            return
+
+        closestPose = findClosestPose(
+            self.getPose(), constants.Robot.preset_positions_list
+        )
+
+        self.pathfindCommand = AutoBuilder.pathfindToPose(
+            closestPose,
+            PathConstraints(
+                constants.Drivetrain.k_max_velocity,
+                constants.Drivetrain.k_max_acceleration,
+                constants.Drivetrain.k_max_turn_velocity,
+                constants.Drivetrain.k_max_turn_acceleration,
+            ),
+        ).andThen(InstantCommand(self.resetPathfindCommand))
+
+        self.pathfindCommand.schedule()
+
+    def resetPathfindCommand(self):
+        if self.pathfindCommand:
+            self.pathfindCommand.cancel()
+            self.pathfindCommand = None
+
     def _getTurnPIDSpeed(self, setpointAngle: float):
         wp.SmartDashboard.putNumber("Setpoint angle", setpointAngle)
         self.turnController.setSetpoint(setpointAngle)
         turnSpeed = self.turnController.calculate(self.angle)
         turnSpeed = clamp(
-            -constants.Drivetrain.k_turn_max_speed,
             turnSpeed,
+            -constants.Drivetrain.k_turn_max_speed,
             constants.Drivetrain.k_turn_max_speed,
         )
         return turnSpeed

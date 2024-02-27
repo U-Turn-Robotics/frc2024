@@ -1,5 +1,7 @@
 import math
+from typing import Dict, Union
 
+from wpimath.geometry import Pose2d
 from wpimath.kinematics import DifferentialDriveKinematics
 from wpimath.units import inchesToMeters
 
@@ -57,13 +59,12 @@ class Drivetrain:
     k_turn_max_speed = 0.5
 
     # TODO: Tune
-    k_max_velocity = 3.0
+    k_max_velocity = 4.0
+    k_max_acceleration = 3.0
+    k_max_turn_velocity = 5.0
+    k_max_turn_acceleration = 4.0
 
     differential_drive_kinematics = DifferentialDriveKinematics(inchesToMeters(23.5))
-
-
-class Robot:
-    period = 0.02
 
 
 class Arm:
@@ -109,3 +110,57 @@ class Shooter:
 class Pickup:
     k_motor_id = 8
     k_pickup_speed = 1
+
+
+class Robot:
+    period = 0.02
+
+    preset_shooting_positions: Dict[str, Dict[str, Union[Pose2d, float, bool]]] = {
+        "speaker_left": {
+            "pose": Pose2d(0.74, 4.32, math.radians(120)),
+            "arm_angle": Arm.k_position_up,  # float
+            "shooter_speed": Shooter.k_shoot_speed,  # float
+            "shoot_with_pickup": False,
+        },
+        "speaker_mid": {
+            "pose": Pose2d(1.45, 5.55, math.radians(180)),
+            "arm_angle": Arm.k_position_up,
+            "shooter_speed": Shooter.k_shoot_speed,
+            "shoot_with_pickup": False,
+        },
+        "speaker_right": {
+            "pose": Pose2d(0.74, 6.77, math.radians(-120)),
+            "arm_angle": Arm.k_position_up,
+            "shooter_speed": Shooter.k_shoot_speed,
+            "shoot_with_pickup": False,
+        },
+        "amp": {
+            "pose": Pose2d(1.84, 6.72, math.radians(-120)),
+            "arm_angle": Arm.k_position_up,
+            "shooter_speed": Shooter.k_shoot_speed,
+            "shoot_with_pickup": True,
+        },
+    }
+
+    preset_pickup_positions: Dict[str, Dict[str, Union[Pose2d, float]]] = {
+        "source": {
+            "pose": Pose2d(15.4, 1.04, math.radians(-60.00)),
+            "arm_angle": Arm.k_position_initial,
+        },
+        "floor": {
+            "pose": None,
+            "arm_angle": Arm.k_position_down,
+        },
+    }
+
+    preset_positions_list = list(
+        filter(
+            lambda val: bool(val),
+            map(lambda val: val["pose"], preset_shooting_positions.values()),
+        )
+    ) + list(
+        filter(
+            lambda val: bool(val),
+            map(lambda val: val["pose"], preset_pickup_positions.values()),
+        )
+    )
