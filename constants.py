@@ -47,6 +47,10 @@ class Drivetrain:
     k_dt_current_limit = 60
 
     # TODO: Tune
+    k_forward_p = 0.012
+    k_forward_i = 0.0
+    k_forward_d = 0.0005
+
     k_turn_p = 0.012
     k_turn_i = 0.0
     k_turn_d = 0.0005
@@ -63,7 +67,7 @@ class Robot:
 
 
 class Arm:
-    k_motor_id = 6
+    k_motor_id = 9
 
     # TODO: Tune all
     k_p = 0.1

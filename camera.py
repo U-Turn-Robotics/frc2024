@@ -1,13 +1,17 @@
+import math
+
+import robotpy_apriltag
 from photonlibpy.photonCamera import PhotonCamera
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
-import robotpy_apriltag
-from wpimath.geometry import Translation3d, Transform3d, Rotation3d, Pose2d
+from wpimath.geometry import Pose2d, Rotation3d, Transform3d, Translation3d
 from wpimath.kinematics import ChassisSpeeds
+
+import PhotonUtils
 
 
 class AprilTagCamera:
     def __init__(self):
-        self.camera = PhotonCamera("photonvision")
+        self.camera = PhotonCamera("picam")
 
         aprilTagField = robotpy_apriltag.loadAprilTagLayoutField(
             robotpy_apriltag.AprilTagField.k2024Crescendo
@@ -41,16 +45,31 @@ class AprilTagCamera:
         if cameraResult.getLatencyMillis() > latencyThreshold:
             return (None, None)
 
-        nearestTarget = None
-        for target in cameraResult.getTargets():
-            if nearestTarget is None:
-                nearestTarget = target
-                continue
-            if target.getArea() > nearestTarget.getArea():
-                nearestTarget = target
+        nearestTarget = PhotonUtils.getNearestTarget(cameraResult.getTargets())
 
         areaThreshold = 0.1
         if nearestTarget.getArea() < areaThreshold:
             return (None, None)
 
         return (self.poseEstimator.update(cameraResult), cameraResult.getTimestamp())
+
+
+class NoteTrackerCamera:
+    def __init__(self):
+        self.camera = PhotonCamera("usb_cam")
+
+    def enableTracking(self):
+        self.camera.setDriverMode(False)
+
+    def disableTracking(self):
+        self.camera.setDriverMode(True)
+
+    def getNotePosition(self):
+        res = self.camera.getLatestResult()
+
+        if res.hasTargets():
+            target = PhotonUtils.getNearestTarget(res.getTargets())
+
+            return (target.getYaw(), target.getArea())
+
+        return (None, None)

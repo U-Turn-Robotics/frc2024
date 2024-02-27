@@ -8,7 +8,9 @@ class PickupSubsystem(Subsystem):
     def __init__(self):
         super().__init__()
 
-        self.motor = rev.CANSparkMax(constants.Pickup.k_motor_id)
+        self.motor = rev.CANSparkMax(
+            constants.Pickup.k_motor_id, rev.CANSparkMax.MotorType.kBrushless
+        )
 
     def pickup(self):
         self.motor.set(constants.Pickup.k_pickup_speed)

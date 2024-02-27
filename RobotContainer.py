@@ -5,7 +5,7 @@ from wpilib import DriverStation
 
 import constants
 from AutoSelector import AutoSelector
-from camera import AprilTagCamera
+from camera import AprilTagCamera, NoteTrackerCamera
 from pilots import Driver, Operator
 from subsystems.ArmSubsystem import ArmSubsystem
 from subsystems.ConveyorSubsystem import ConveyorSubsystem
@@ -17,9 +17,12 @@ from subsystems.ShooterSubsystem import ShooterSubsystem
 class RobotContainer:
     def __init__(self) -> None:
         self.aprilTagCamera = AprilTagCamera()
+        self.noteTrackerCamera = NoteTrackerCamera()
 
         self.driver = Driver()
-        self.driveSubsystem = DriveSubsystem(self.driver, self.aprilTagCamera)
+        self.driveSubsystem = DriveSubsystem(
+            self.driver, self.aprilTagCamera, self.noteTrackerCamera
+        )
         self.driveSubsystem.setDefaultCommand(
             RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
         )
@@ -27,11 +30,17 @@ class RobotContainer:
         self.operator = Operator()
 
         self.pickupSubsystem = PickupSubsystem()
-        self.pickupSubsystem.setDefaultCommand(self.pickupSubsystem.stop)
+        self.pickupSubsystem.setDefaultCommand(
+            RunCommand(self.pickupSubsystem.stop, self.pickupSubsystem)
+        )
         self.conveyorSubsystem = ConveyorSubsystem()
-        self.conveyorSubsystem.setDefaultCommand(self.conveyorSubsystem.stop)
+        self.conveyorSubsystem.setDefaultCommand(
+            RunCommand(self.conveyorSubsystem.stop, self.conveyorSubsystem)
+        )
         self.shooterSubsystem = ShooterSubsystem()
-        self.shooterSubsystem.setDefaultCommand(self.shooterSubsystem.stop)
+        self.shooterSubsystem.setDefaultCommand(
+            RunCommand(self.shooterSubsystem.stop, self.shooterSubsystem)
+        )
         self.armSubsystem = ArmSubsystem()
 
         self.configureCommands()
@@ -59,8 +68,18 @@ class RobotContainer:
         )
 
     def configureButtonBindings(self):
-        self.operator.get_shoot_trigger().whileTrue(self.shootCommand)
-        self.operator.get_pickup_trigger().whileTrue(self.pickupCommand)
+        self.operator.getShoot().whileTrue(self.shootCommand)
+        self.operator.getPickup().whileTrue(self.pickupCommand)
+
+        self.driver.getToggleFieldOriented().onTrue(
+            InstantCommand(self.driveSubsystem.toggleFieldOriented)
+        )
+        self.driver.getResetAngle().onTrue(
+            InstantCommand(self.driveSubsystem.resetGyro)
+        )
+        self.driver.getToggleBrakeMode().onTrue(
+            InstantCommand(self.driveSubsystem.toggleBrakeMode)
+        )
 
     def configureAuto(self):
         NamedCommands.registerCommand(

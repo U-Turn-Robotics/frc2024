@@ -1,97 +1,114 @@
+import math
+
 import rev
 import wpilib as wp
 import wpilib.drive
 from commands2 import Subsystem
 from navx import AHRS
-from wpimath.geometry import Pose2d
 from wpimath.controller import PIDController
-from wpimath.kinematics import (
-    ChassisSpeeds,
-    DifferentialDriveWheelSpeeds,
-)
 from wpimath.estimator import DifferentialDrivePoseEstimator
+from wpimath.geometry import Pose2d
+from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
 from wpimath.units import (
     radiansPerSecondToRotationsPerMinute,
     rotationsPerMinuteToRadiansPerSecond,
 )
-import math
 
 import constants
+from camera import AprilTagCamera, NoteTrackerCamera
 from pilots import Driver
 from utils.utils import clamp, rotate_180_degrees
-from camera import AprilTagCamera
 
 
 class DriveSubsystem(Subsystem):
-    def __init__(self, driver: Driver, aprilTagCamera: AprilTagCamera):
+    def __init__(
+        self,
+        driver: Driver,
+        aprilTagCamera: AprilTagCamera,
+        noteTrackerCamera: NoteTrackerCamera,
+    ):
         self.driver = driver
         self.aprilTagCamera = aprilTagCamera
+        self.noteTrackerCamera = noteTrackerCamera
 
         # left spark 1
-        spark_l_1 = rev.CANSparkMax(
+        self.spark_l_1 = rev.CANSparkMax(
             constants.Drivetrain.k_left_motor1_port,
             rev.CANSparkMax.MotorType.kBrushless,
         )
-        spark_l_1.restoreFactoryDefaults()
-        spark_l_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        spark_l_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        spark_l_1.setInverted(True)
-        self.left_encoder = spark_l_1.getEncoder()
+        self.spark_l_1.restoreFactoryDefaults()
+        self.spark_l_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.spark_l_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        self.spark_l_1.setInverted(True)
+        self.left_encoder = self.spark_l_1.getEncoder()
         self.left_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
-        self.l_1_pid_controller = spark_l_1.getPIDController()
+        self.l_1_pid_controller = self.spark_l_1.getPIDController()
 
         # left spark 2, follows left spark 1
-        spark_l_2 = rev.CANSparkMax(
+        self.spark_l_2 = rev.CANSparkMax(
             constants.Drivetrain.k_left_motor2_port,
             rev.CANSparkMax.MotorType.kBrushless,
         )
-        spark_l_2.restoreFactoryDefaults()
-        spark_l_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        spark_l_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        spark_l_2.setInverted(True)
-        self.l_2_pid_controller = spark_l_2.getPIDController()
+        self.spark_l_2.restoreFactoryDefaults()
+        self.spark_l_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.spark_l_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        self.spark_l_2.setInverted(True)
+        self.l_2_pid_controller = self.spark_l_2.getPIDController()
 
         # right spark 1
-        spark_r_1 = rev.CANSparkMax(
+        self.spark_r_1 = rev.CANSparkMax(
             constants.Drivetrain.k_right_motor1_port,
             rev.CANSparkMax.MotorType.kBrushless,
         )
-        spark_r_1.restoreFactoryDefaults()
-        spark_r_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        spark_r_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        self.right_encoder = spark_r_1.getEncoder()
+        self.spark_r_1.restoreFactoryDefaults()
+        self.spark_r_1.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.spark_r_1.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        self.right_encoder = self.spark_r_1.getEncoder()
         self.right_encoder.setPositionConversionFactor(
             constants.Drivetrain.k_position_conversion_factor
         )
-        self.r_1_pid_controller = spark_r_1.getPIDController()
+        self.r_1_pid_controller = self.spark_r_1.getPIDController()
 
         # right spark 2, follows right spark 1
-        spark_r_2 = rev.CANSparkMax(
+        self.spark_r_2 = rev.CANSparkMax(
             constants.Drivetrain.k_right_motor2_port,
             rev.CANSparkMax.MotorType.kBrushless,
         )
-        spark_r_2.restoreFactoryDefaults()
-        spark_r_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        spark_r_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
-        self.r_2_pid_controller = spark_r_2.getPIDController()
+        self.spark_r_2.restoreFactoryDefaults()
+        self.spark_r_2.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
+        self.spark_r_2.setSmartCurrentLimit(constants.Drivetrain.k_dt_current_limit)
+        self.r_2_pid_controller = self.spark_r_2.getPIDController()
 
         # initialize the drivetrain
-        left = wpilib.MotorControllerGroup(spark_l_1, spark_l_2)
-        right = wpilib.MotorControllerGroup(spark_r_1, spark_r_2)
+        left = wpilib.MotorControllerGroup(self.spark_l_1, self.spark_l_2)
+        right = wpilib.MotorControllerGroup(self.spark_r_1, self.spark_r_2)
         self.drivetrain = wpilib.drive.DifferentialDrive(left, right)
 
         self.gyro = AHRS(wp.SPI.Port.kMXP, update_rate_hz=100)
 
-        self.turn_controller = PIDController(
+        self.turnController = PIDController(
             constants.Drivetrain.k_turn_p,
             constants.Drivetrain.k_turn_i,
             constants.Drivetrain.k_turn_d,
-            period=0.01,
+            period=constants.Robot.period,
         )
-        self.turn_controller.enableContinuousInput(-180, 180)
-        self.turn_controller.setTolerance(5)
+        self.turnController.enableContinuousInput(-180, 180)
+        self.turnController.setTolerance(5)
+
+        self.vision_forward_controller = PIDController(
+            constants.Drivetrain.k_forward_p,
+            constants.Drivetrain.k_forward_i,
+            constants.Drivetrain.k_forward_d,
+            period=constants.Robot.period,
+        )
+        self.vision_turn_controller = PIDController(
+            constants.Drivetrain.k_turn_p,
+            constants.Drivetrain.k_turn_i,
+            constants.Drivetrain.k_turn_d,
+            period=constants.Robot.period,
+        )
 
         self.field_oriented = True
         wp.SmartDashboard.putBoolean("Field Oriented", self.field_oriented)
@@ -114,10 +131,10 @@ class DriveSubsystem(Subsystem):
         )
         self.field.setRobotPose(self.pose)
 
-    def get_angle(self):
+    def getAngle(self):
         return self.gyro.getYaw()
 
-    def reset_gyro(self):
+    def resetGyro(self):
         self.gyro.zeroYaw()
 
     def getPose(self):
@@ -154,10 +171,10 @@ class DriveSubsystem(Subsystem):
 
         self.field.setRobotPose(self.pose)
 
-        self.driver_connected = self.driver.is_connected()
+        self.driver_connected = self.driver.isConnected()
         wp.SmartDashboard.putBoolean("Driver Connected", self.driver_connected)
 
-        self.angle = self.get_angle()
+        self.angle = self.getAngle()
         wp.SmartDashboard.putNumber("Gyro Angle", self.angle)
 
     def getSpeeds(self):
@@ -202,55 +219,87 @@ class DriveSubsystem(Subsystem):
         # prevents "Error at frc::MotorSafety::Check: A timeout has been exceeded: DifferentialDrive... Output not updated often enough."
         self.drivetrain.feed()
 
+    def toggleBrakeMode(self):
+        idleModeToSet = (
+            rev.CANSparkMax.IdleMode.kBrake
+            if self.spark_l_1.getIdleMode() == rev.CANSparkMax.IdleMode.kCoast
+            else rev.CANSparkMax.IdleMode.kCoast
+        )
+        self.spark_l_1.setIdleMode(idleModeToSet)
+        self.spark_l_2.setIdleMode(idleModeToSet)
+        self.spark_r_1.setIdleMode(idleModeToSet)
+        self.spark_r_2.setIdleMode(idleModeToSet)
+
+    def toggleFieldOriented(self):
+        self.field_oriented = not self.field_oriented
+        wp.SmartDashboard.putBoolean("Field Oriented", self.field_oriented)
+
     def drive(self):
+        speed = 0.0
+        turnSpeed = 0.0
+        squareInputs = True
         if self.driver_connected:
-            if self.driver.get_toggle_field_oriented():
-                self.field_oriented = not self.field_oriented
-                wp.SmartDashboard.putBoolean("Field Oriented", self.field_oriented)
-
-            if self.driver.get_reset_angle():
-                self.reset_gyro()
-
             if self.field_oriented:
-                self.field_oriented_drive()
+                (speed, turnSpeed) = self.fieldOrientedDrive()
             else:
-                self.drivetrain.arcadeDrive(
-                    self.driver.get_arcade_drive_speed(),
-                    self.driver.get_arcade_drive_rotation(),
-                    squareInputs=False,
-                )
-        else:
-            self.drivetrain.arcadeDrive(0, 0)
+                (speed, turnSpeed) = self.arcadeDrive()
 
-    def field_oriented_drive(self):
-        speed = self.driver.get_speed()
-        turn_speed = 0.0
+            if speed == 0.0:
+                if self.driver.getVisionTrack():
+                    # self.noteTrackerCamera.enableTracking()
+                    (speed, turnSpeed) = self.visionTrack()
+                # else:
+                #     self.noteTrackerCamera.disableTracking()
+
+        self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
+
+    def arcadeDrive(self):
+        speed = self.driver.getArcadeDriveSpeed()
+        turnSpeed = self.driver.getArcadeDriveRotation()
+        if abs(turnSpeed) > 0:
+            self.lastTurnAngle = self.angle
+        return (speed, turnSpeed)
+
+    def fieldOrientedDrive(self):
+        speed = self.driver.getSpeed()
+        turnSpeed = 0.0
 
         # get the magnitude of the joystick using atan2
-        if self.driver.get_magnitude() > 0.9 and abs(speed) > 0.0:
-            setpoint_angle = self.driver.get_angle()
+        if self.driver.getMagnitude() > 0.9 and abs(speed) > 0.0:
+            setpointAngle = self.driver.getAngle()
 
-            is_reversing = speed < 0
+            is_reversing = speed < 0.0
             if is_reversing:
-                setpoint_angle = rotate_180_degrees(setpoint_angle)
+                setpointAngle = rotate_180_degrees(setpointAngle)
 
-            wp.SmartDashboard.putNumber("Setpoint angle", setpoint_angle)
-            self.turn_controller.setSetpoint(setpoint_angle)
-            turn_speed = self.turn_controller.calculate(self.angle)
-            turn_speed = clamp(
-                -constants.Drivetrain.k_turn_max_speed,
-                turn_speed,
-                constants.Drivetrain.k_turn_max_speed,
-            )
+            turnSpeed = self._getTurnPIDSpeed(setpointAngle)
 
             # # wait for the turn controller to be on target before moving
             # if not self.turn_controller.atSetpoint():
             #     speed = 0
         else:
-            speed = 0
+            speed = 0.0
 
-        self.drivetrain.arcadeDrive(
-            -speed * constants.Drivetrain.speed_scale,
-            turn_speed,
-            squareInputs=True,
+        return (-speed * constants.Drivetrain.speed_scale, turnSpeed)
+
+    def visionTrack(self):
+        speed = 0.0
+        turnSpeed = 0.0
+        # self.noteTrackerCamera.enableTracking()
+        (angle, area) = self.noteTrackerCamera.getNotePosition()
+        if angle and area:
+            turnSpeed = -self.vision_turn_controller.calculate(angle, 0)
+            speed = -self.vision_forward_controller.calculate(area, 100)
+
+        return (speed, turnSpeed)
+
+    def _getTurnPIDSpeed(self, setpointAngle: float):
+        wp.SmartDashboard.putNumber("Setpoint angle", setpointAngle)
+        self.turnController.setSetpoint(setpointAngle)
+        turnSpeed = self.turnController.calculate(self.angle)
+        turnSpeed = clamp(
+            -constants.Drivetrain.k_turn_max_speed,
+            turnSpeed,
+            constants.Drivetrain.k_turn_max_speed,
         )
+        return turnSpeed
