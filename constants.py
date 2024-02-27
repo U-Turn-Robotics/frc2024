@@ -86,6 +86,7 @@ class Arm:
     k_position_up = math.radians(80)
     k_position_down = math.radians(0)
     k_position_offset = k_position_initial
+    k_preset_positions = [k_position_initial, k_position_up, k_position_down]
 
     k_gear_reduction = 48
     k_encoder_pulses_per_revolution = (

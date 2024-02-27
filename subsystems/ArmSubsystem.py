@@ -22,6 +22,7 @@ class ArmSubsystem(Subsystem):
         self.motorEncoder.setVelocityConversionFactor(
             rotationsPerMinuteToRadiansPerSecond(Arm.k_encoder_position_per_radian)
         )
+        self.motorEncoder.setPosition(Arm.k_position_initial)
 
         self.motorPID = self.motor.getPIDController()
         self.motorPID.setP(Arm.k_p)
@@ -60,11 +61,29 @@ class ArmSubsystem(Subsystem):
         self.motor.set(speed)
         self._setPosition(self.motorEncoder.getPosition())
 
-    def setInitialPosition(self):
-        self._setPosition(Arm.k_position_initial)
+    # def setInitialPosition(self):
+    #     self._setPosition(Arm.k_position_initial)
 
-    def setUpPosition(self):
-        self._setPosition(Arm.k_position_up)
+    # def setUpPosition(self):
+    #     self._setPosition(Arm.k_position_up)
 
-    def setDownPosition(self):
-        self._setPosition(Arm.k_position_down)
+    # def setDownPosition(self):
+    #     self._setPosition(Arm.k_position_down)
+
+    def _movePosition(self, positionDelta: int):
+        presetPositionIndex = (
+            Arm.k_preset_positions.index(self.lastPosition) + positionDelta
+        )
+
+        if presetPositionIndex < 0:
+            presetPositionIndex = 0
+        elif presetPositionIndex >= len(Arm.k_preset_positions):
+            presetPositionIndex = len(Arm.k_preset_positions) - 1
+
+        self._setPosition(Arm.k_preset_positions[presetPositionIndex])
+
+    def raisePosition(self):
+        self._movePosition(1)
+
+    def lowerPosition(self):
+        self._movePosition(-1)
