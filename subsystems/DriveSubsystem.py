@@ -3,13 +3,13 @@ import math
 import rev
 import wpilib as wp
 import wpilib.drive
-from commands2 import FunctionalCommand, InstantCommand, RunCommand, Subsystem
+from commands2 import Subsystem
 from navx import AHRS
 from pathplannerlib.auto import AutoBuilder, PathConstraints
-from pathplannerlib.path import GoalEndState, PathConstraints, PathPlannerPath
+from pathplannerlib.path import GoalEndState, PathPlannerPath
 from wpimath.controller import PIDController
 from wpimath.estimator import DifferentialDrivePoseEstimator
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
 from wpimath.units import (
     radiansPerSecondToRotationsPerMinute,

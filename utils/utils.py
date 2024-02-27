@@ -2,7 +2,6 @@ from typing import List
 
 from wpimath.geometry import Pose2d
 
-
 import constants
 
 
@@ -63,7 +62,7 @@ def calcAxisSpeedWithCurvatureAndDeadzone(
     return abs(x**c) * sign * (1 - b) + b * sign
 
 
-def findClosestPose(pose: Pose2d, poses: List[Pose2d]):
+def findClosestPose(pose: Pose2d, poses: List[Pose2d]) -> Pose2d:
     closestPose = None
     closestDistance = float("inf")
     for p in poses:
