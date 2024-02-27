@@ -3,12 +3,13 @@ import math
 import rev
 import wpilib as wp
 import wpilib.drive
-from commands2 import InstantCommand, Subsystem
+from commands2 import FunctionalCommand, InstantCommand, RunCommand, Subsystem
 from navx import AHRS
 from pathplannerlib.auto import AutoBuilder, PathConstraints
+from pathplannerlib.path import GoalEndState, PathConstraints, PathPlannerPath
 from wpimath.controller import PIDController
 from wpimath.estimator import DifferentialDrivePoseEstimator
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
 from wpimath.units import (
     radiansPerSecondToRotationsPerMinute,
@@ -265,7 +266,18 @@ class DriveSubsystem(Subsystem):
         if not isVisionTracking:
             self.noteTrackerCamera.disableTracking()
 
-        self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
+        if not wp.RobotBase.isSimulation():
+            self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
+        else:
+            wheelSpeeds = self.drivetrain.arcadeDriveIK(speed, turnSpeed, squareInputs)
+            self.setSpeeds(
+                constants.Drivetrain.differential_drive_kinematics.toChassisSpeeds(
+                    DifferentialDriveWheelSpeeds(wheelSpeeds.left, wheelSpeeds.right)
+                )
+            )
+
+    def stop(self):
+        self.drivetrain.stopMotor()
 
     def arcadeDrive(self):
         speed = self.driver.getArcadeDriveSpeed()
@@ -306,28 +318,46 @@ class DriveSubsystem(Subsystem):
         return (speed, turnSpeed)
 
     def snapToClosestPresetPose(self):
-        if self.pathfindCommand:
-            return
+        if self.pathfindCommand is None:
+            currentPose = self.getPose()
+            closestPose = findClosestPose(
+                currentPose,
+                constants.Robot.preset_positions_list_flipped
+                if AutoBuilder._shouldFlipPath()
+                else constants.Robot.preset_positions_list,
+            )
 
-        closestPose = findClosestPose(
-            self.getPose(), constants.Robot.preset_positions_list
-        )
-
-        self.pathfindCommand = AutoBuilder.pathfindToPose(
-            closestPose,
-            PathConstraints(
+            bezierPoints = PathPlannerPath.bezierFromPoses(
+                [
+                    currentPose,
+                    closestPose,
+                ]
+            )
+            constraints = PathConstraints(
                 constants.Drivetrain.k_max_velocity,
                 constants.Drivetrain.k_max_acceleration,
                 constants.Drivetrain.k_max_turn_velocity,
                 constants.Drivetrain.k_max_turn_acceleration,
-            ),
-        ).andThen(InstantCommand(self.resetPathfindCommand))
+            )
+            path = PathPlannerPath(
+                bezierPoints,
+                constraints,
+                GoalEndState(0.0, closestPose.rotation(), True),
+            )
+            # the preset poses are already flipped, so the path should not be flipped
+            path.preventFlipping = True
 
-        self.pathfindCommand.schedule()
+            self.pathfindCommand = AutoBuilder.followPath(path)
+
+            self.pathfindCommand.initialize()
+
+        self.pathfindCommand.execute()
+        if self.pathfindCommand.isFinished():
+            self.pathfindCommand.end(False)
+            self.stop()
 
     def resetPathfindCommand(self):
         if self.pathfindCommand:
-            self.pathfindCommand.cancel()
             self.pathfindCommand = None
 
     def _getTurnPIDSpeed(self, setpointAngle: float):

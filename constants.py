@@ -1,6 +1,7 @@
 import math
 from typing import Dict, Union
 
+from pathplannerlib.geometry_util import flipFieldPose
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import DifferentialDriveKinematics
 from wpimath.units import inchesToMeters
@@ -163,4 +164,8 @@ class Robot:
             lambda val: bool(val),
             map(lambda val: val["pose"], preset_pickup_positions.values()),
         )
+    )
+
+    preset_positions_list_flipped = list(
+        map(lambda pose: flipFieldPose(pose), preset_positions_list)
     )

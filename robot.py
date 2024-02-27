@@ -30,7 +30,7 @@ class Robot(wp.TimedRobot):
             self.autoCommand.cancel()
 
     def teleopPeriodic(self):
-        pass
+        self.robot.teleopPeriodic()
 
     def testInit(self):
         CommandScheduler.getInstance().cancelAll()

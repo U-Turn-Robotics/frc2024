@@ -23,9 +23,6 @@ class RobotContainer:
         self.driveSubsystem = DriveSubsystem(
             self.driver, self.aprilTagCamera, self.noteTrackerCamera
         )
-        self.driveSubsystem.setDefaultCommand(
-            RunCommand(self.driveSubsystem.drive, self.driveSubsystem)
-        )
 
         self.operator = Operator()
 
@@ -49,6 +46,9 @@ class RobotContainer:
 
         self.configureAuto()
         self.startingPose = None
+
+    def teleopPeriodic(self):
+        self.driveSubsystem.drive()
 
     def configureCommands(self):
         self.shootCommand = (
