@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import typing
@@ -33,15 +34,13 @@ class AutoSelector:
         autos = {}
         for file in os.listdir(autosPath):
             if file.endswith(".auto"):
-                with open(os.path.join(autosPath, file), "r") as f:
+                with open(os.path.join(autosPath, file)) as f:
                     auto_json = json.loads(f.read())
                     starting_pose = None
-                    try:
+                    with contextlib.suppress(KeyError):
                         starting_pose = AutoBuilder.getStartingPoseFromJson(
                             auto_json["startingPose"]
                         )
-                    except KeyError:
-                        pass
                     autos[file.split(".auto")[0]] = (
                         starting_pose,
                         AutoBuilder.getAutoCommandFromJson(auto_json),

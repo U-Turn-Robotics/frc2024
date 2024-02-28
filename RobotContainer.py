@@ -1,7 +1,7 @@
 from commands2 import InstantCommand, RunCommand, StartEndCommand
 from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
-from wpilib import DriverStation
+from wpilib import DriverStation, RobotBase
 
 import constants
 from AutoSelector import AutoSelector
@@ -119,9 +119,10 @@ class RobotContainer:
 
     def getAutoCommand(self):
         (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
-        print(f"Starting pose: {self.startingPose}")
-        if self.startingPose:
-            if self.shouldFlipAuto():
-                self.startingPose = flipFieldPose(self.startingPose)
-            self.driveSubsystem.resetPose(self.startingPose)
+        if RobotBase.isSimulation():
+            if self.startingPose:
+                if self.shouldFlipAuto():
+                    self.startingPose = flipFieldPose(self.startingPose)
+                print(f"Starting pose: {self.startingPose}")
+                self.driveSubsystem.resetPose(self.startingPose)
         return auto
