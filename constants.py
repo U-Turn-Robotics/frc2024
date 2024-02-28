@@ -136,7 +136,7 @@ class Robot:
             "shoot_with_pickup": False,
         },
         "amp": {
-            "pose": Pose2d(1.84, 6.72, math.radians(-120)),
+            "pose": Pose2d(1.84, 7.43, math.radians(90.00)),
             "arm_angle": Arm.k_position_up,
             "shooter_speed": Shooter.k_shoot_speed,
             "shoot_with_pickup": True,
