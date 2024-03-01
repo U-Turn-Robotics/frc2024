@@ -22,3 +22,6 @@ class PickupSubsystem(Subsystem):
 
     def stop(self):
         self.motor.set(0)
+
+    def setSpeed(self, speed: float):
+        self.motor.set(speed)
