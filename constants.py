@@ -2,7 +2,7 @@ import math
 from typing import Dict, Union
 
 from pathplannerlib.geometry_util import flipFieldPose
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Rotation3d, Transform3d, Translation3d
 from wpimath.kinematics import DifferentialDriveKinematics
 from wpimath.units import inchesToMeters
 
@@ -114,6 +114,18 @@ class Shooter:
 class Pickup:
     k_motor_id = 8
     k_pickup_speed = 1
+
+
+class Cameras:
+    note_tracker_camera_name = "usb_cam"
+    april_tag_camera_name = "picam"
+
+    # TODO tune
+    robot_to_april_tag_cam = Transform3d(
+        # Cam mounted facing forward, half a meter forward of center, half a meter up from center.
+        Translation3d(0.5, 0.0, 0.5),
+        Rotation3d(0, 0, 0),
+    )
 
 
 class Robot:

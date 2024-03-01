@@ -1,28 +1,26 @@
 import robotpy_apriltag
 from photonlibpy.photonCamera import PhotonCamera
 from photonlibpy.photonPoseEstimator import PhotonPoseEstimator, PoseStrategy
-from wpimath.geometry import Pose2d, Rotation3d, Transform3d, Translation3d
+from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 
+import constants
 import utils.PhotonUtils as PhotonUtils
 
 
 class AprilTagCamera:
     def __init__(self):
-        self.camera = PhotonCamera("picam")
+        self.camera = PhotonCamera(constants.Cameras.april_tag_camera_name)
 
         aprilTagField = robotpy_apriltag.loadAprilTagLayoutField(
             robotpy_apriltag.AprilTagField.k2024Crescendo
         )
 
-        # Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-        robotToCam = Transform3d(Translation3d(0.5, 0.0, 0.5), Rotation3d(0, 0, 0))
-
         self.poseEstimator = PhotonPoseEstimator(
             aprilTagField,
             PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
             self.camera,
-            robotToCam,
+            constants.Cameras.robot_to_april_tag_cam,
         )
 
     def getEstimatedPose(self, referencePose: Pose2d, robotSpeeds: ChassisSpeeds):
@@ -57,7 +55,7 @@ class AprilTagCamera:
 
 class NoteTrackerCamera:
     def __init__(self):
-        self.camera = PhotonCamera("usb_cam")
+        self.camera = PhotonCamera(constants.Cameras.note_tracker_camera_name)
 
     def enableTracking(self):
         self.camera.setDriverMode(False)
