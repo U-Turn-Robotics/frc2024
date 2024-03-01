@@ -80,6 +80,9 @@ class Operator:
     def getPickupSpeed(self):
         return self._controller.getRightTriggerAxis()
 
+    def toggleIntakeDirection(self):
+        return self._controller.y()
+
     def getRaiseArm(self):
         return self._controller.povUp()
 

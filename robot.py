@@ -1,5 +1,6 @@
 import wpilib as wp
 from commands2 import CommandScheduler
+from wpinet import PortForwarder
 
 import constants
 from RobotContainer import RobotContainer
@@ -12,6 +13,8 @@ class Robot(wp.TimedRobot):
         self.autoCommand = None
 
     def robotInit(self):
+        PortForwarder.getInstance().add(5800, "photonvision.local", 5800)
+        wp.CameraServer.launch()
         self.robot = RobotContainer()
 
     def robotPeriodic(self):

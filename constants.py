@@ -54,9 +54,10 @@ class Drivetrain:
     k_forward_i = 0.0
     k_forward_d = 0.001
 
-    k_turn_p = 0.012
-    k_turn_i = 0.0
-    k_turn_d = 0.0005
+    k_vision_turn_p = 0.012
+    k_vision_turn_i = 0.0
+    k_vision_turn_d = 0.0005
+
     k_turn_max_speed = 0.5
 
     # TODO: Tune

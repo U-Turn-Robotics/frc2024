@@ -91,9 +91,9 @@ class DriveSubsystem(Subsystem):
         self.gyro = AHRS(wp.SPI.Port.kMXP, update_rate_hz=100)
 
         self.turnController = PIDController(
-            constants.Drivetrain.k_turn_p,
-            constants.Drivetrain.k_turn_i,
-            constants.Drivetrain.k_turn_d,
+            constants.Drivetrain.k_vision_turn_p,
+            constants.Drivetrain.k_vision_turn_i,
+            constants.Drivetrain.k_vision_turn_d,
             period=constants.Robot.period,
         )
         self.turnController.enableContinuousInput(-180, 180)
@@ -106,13 +106,13 @@ class DriveSubsystem(Subsystem):
             period=constants.Robot.period,
         )
         self.vision_turn_controller = PIDController(
-            constants.Drivetrain.k_turn_p,
-            constants.Drivetrain.k_turn_i,
-            constants.Drivetrain.k_turn_d,
+            constants.Drivetrain.k_vision_turn_p,
+            constants.Drivetrain.k_vision_turn_i,
+            constants.Drivetrain.k_vision_turn_d,
             period=constants.Robot.period,
         )
 
-        self.field_oriented = True
+        self.field_oriented = False
         wp.SmartDashboard.putBoolean("Field Oriented", self.field_oriented)
 
         wp.SmartDashboard.putNumber("Setpoint angle", 0)
@@ -120,7 +120,7 @@ class DriveSubsystem(Subsystem):
         self.field = wp.Field2d()
         wp.SmartDashboard.putData("Field", self.field)
 
-        self.pose = Pose2d(angle=0, x=0, y=0)
+        self.pose = Pose2d(angle=-60, x=1.41, y=5.53)
         self.poseEstimator = DifferentialDrivePoseEstimator(
             constants.Drivetrain.differential_drive_kinematics,
             self.pose.rotation(),
@@ -242,6 +242,7 @@ class DriveSubsystem(Subsystem):
         speed = 0.0
         turnSpeed = 0.0
         squareInputs = True
+        curvatureDrive = False
 
         isVisionTracking = False
 
@@ -249,7 +250,8 @@ class DriveSubsystem(Subsystem):
             if self.field_oriented:
                 (speed, turnSpeed) = self.fieldOrientedDrive()
             else:
-                (speed, turnSpeed) = self.arcadeDrive()
+                # (speed, turnSpeed) = self.arcadeDrive()
+                (speed, turnSpeed, curvatureDrive) = self.arcadeDrive()
 
             if speed == 0.0:
                 if self.driver.getTrackNoteGamePiece():
@@ -267,7 +269,10 @@ class DriveSubsystem(Subsystem):
             self.noteTrackerCamera.disableTracking()
 
         if not wp.RobotBase.isSimulation():
-            self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
+            if not curvatureDrive:
+                self.drivetrain.arcadeDrive(speed, turnSpeed, squareInputs)
+            else:
+                self.drivetrain.curvatureDrive(speed, turnSpeed, True)
         else:
             wheelSpeeds = self.drivetrain.arcadeDriveIK(speed, turnSpeed, squareInputs)
             self.setSpeeds(
@@ -284,7 +289,8 @@ class DriveSubsystem(Subsystem):
         turnSpeed = self.driver.getArcadeDriveRotation()
         if abs(turnSpeed) > 0:
             self.lastTurnAngle = self.angle
-        return (speed, turnSpeed)
+        curvatureDrive = True
+        return (speed, turnSpeed, curvatureDrive)
 
     def fieldOrientedDrive(self):
         speed = self.driver.getSpeed()

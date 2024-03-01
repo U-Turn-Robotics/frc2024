@@ -33,10 +33,6 @@ class RobotContainer:
                 self.pickupSubsystem,
             )
         )
-        self.conveyorSubsystem = ConveyorSubsystem()
-        self.conveyorSubsystem.setDefaultCommand(
-            RunCommand(self.conveyorSubsystem.stop, self.conveyorSubsystem)
-        )
         self.shooterSubsystem = ShooterSubsystem()
         self.shooterSubsystem.setDefaultCommand(
             RunCommand(
@@ -70,12 +66,11 @@ class RobotContainer:
             RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem)
             .withTimeout(0.5)
             .andThen(
-                StartEndCommand(
-                    self.conveyorSubsystem.convey,
-                    self.conveyorSubsystem.stop,
-                    self.conveyorSubsystem,
+                RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem).alongWith(
+                    RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem)
                 )
             )
+            .withTimeout(1)
             .andThen(InstantCommand(lambda: print("shoot tested!!!")))
         )
 
@@ -95,6 +90,14 @@ class RobotContainer:
         )
         self.operator.getLowerArm().onTrue(
             InstantCommand(self.armSubsystem.lowerPosition, self.armSubsystem)
+        )
+
+        def invertBoth():
+            self.pickupSubsystem.invert()
+            self.shooterSubsystem.invert()
+
+        self.operator.toggleIntakeDirection().onTrue(
+            InstantCommand(invertBoth, self.pickupSubsystem, self.shooterSubsystem)
         )
 
         self.driver.getToggleFieldOriented().onTrue(

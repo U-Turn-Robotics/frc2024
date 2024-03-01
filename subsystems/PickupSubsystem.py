@@ -17,8 +17,13 @@ class PickupSubsystem(Subsystem):
         )
         self.motor.setSmartCurrentLimit(60)
 
+        self._invert = 1
+
+    def invert(self):
+        self._invert *= -1
+
     def pickup(self):
-        self.motor.set(constants.Pickup.k_pickup_speed)
+        self.motor.set(constants.Pickup.k_pickup_speed * self._invert)
 
     def stop(self):
         self.motor.set(0)

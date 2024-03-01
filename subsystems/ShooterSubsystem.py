@@ -1,7 +1,9 @@
 import rev
-from commands2 import Subsystem
-import constants
 import wpilib as wp
+from commands2 import Subsystem
+
+import constants
+import constants
 
 
 class ShooterSubsystem(Subsystem):
@@ -24,8 +26,13 @@ class ShooterSubsystem(Subsystem):
 
         self.shooter = wp.MotorControllerGroup(motor_1, motor_2)
 
+        self._invert = 1
+
+    def invert(self):
+        self._invert *= -1
+
     def setSpeed(self, speed: float):
-        self.shooter.set(speed)
+        self.shooter.set(speed * self._invert)
 
     def shoot(self):
         self.shooter.set(constants.Shooter.k_shoot_speed)
