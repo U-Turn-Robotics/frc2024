@@ -290,7 +290,7 @@ class DriveSubsystem(Subsystem):
         speed = self.driver.getSpeed()
         turnSpeed = 0.0
 
-        if self.driver.getMagnitude() > 0.8:
+        if self.driver.getMagnitude() > 0.8 and abs(speed) > 0.05:
             setpointAngle = self.driver.getAngle()
 
             is_reversing = speed < 0.0
