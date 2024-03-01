@@ -9,8 +9,9 @@ class PickupSubsystem(Subsystem):
         super().__init__()
 
         self.motor = rev.CANSparkMax(
-            constants.Pickup.k_motor_id, rev.CANSparkMax.MotorType.kBrushless
+            constants.Pickup.k_motor_id, rev.CANSparkMax.MotorType.kBrushed
         )
+        self.motor.setSmartCurrentLimit(60)
 
     def pickup(self):
         self.motor.set(constants.Pickup.k_pickup_speed)
