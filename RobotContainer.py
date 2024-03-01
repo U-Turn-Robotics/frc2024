@@ -45,7 +45,7 @@ class RobotContainer:
             RunCommand(
                 lambda: self.armSubsystem.setSpeed(
                     self.operator.getSlowArmSpeed() * constants.Arm.slow_arm_speed_scale
-                    or self.operator.getArmSpeed()
+                    or self.operator.getArmSpeed() * constants.Arm.arm_speed_scale
                 ),
                 self.armSubsystem,
             )
@@ -63,7 +63,9 @@ class RobotContainer:
 
     def configureCommands(self):
         self.shootCommand = (
-            RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem)
+            RunCommand(lambda: self.armSubsystem.setSpeed(-0.2), self.armSubsystem)
+            .withTimeout(1)
+            .andThen(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
             .withTimeout(0.5)
             .andThen(
                 RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem).alongWith(
@@ -74,13 +76,9 @@ class RobotContainer:
             .andThen(InstantCommand(lambda: print("shoot tested!!!")))
         )
 
-        self.pickupCommand = (
-            RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
-            .alongWith(
-                RunCommand(self.conveyorSubsystem.convey, self.conveyorSubsystem)
-            )
-            .andThen(InstantCommand(lambda: print("pickup tested!!!")))
-        )
+        self.pickupCommand = RunCommand(
+            self.pickupSubsystem.pickup, self.pickupSubsystem
+        ).andThen(InstantCommand(lambda: print("pickup tested!!!")))
 
     def configureButtonBindings(self):
         self.operator.getShoot().whileTrue(self.shootCommand)
