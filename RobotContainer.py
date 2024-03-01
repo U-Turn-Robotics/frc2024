@@ -36,7 +36,10 @@ class RobotContainer:
         )
         self.shooterSubsystem = ShooterSubsystem()
         self.shooterSubsystem.setDefaultCommand(
-            RunCommand(self.shooterSubsystem.stop, self.shooterSubsystem)
+            RunCommand(
+                lambda: self.shooterSubsystem.setSpeed(self.operator.getShootSpeed()),
+                self.shooterSubsystem,
+            )
         )
         self.armSubsystem = ArmSubsystem()
         self.armSubsystem.setDefaultCommand(
