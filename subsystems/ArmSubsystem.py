@@ -83,7 +83,7 @@ class ArmSubsystem(Subsystem):
         wpilib.SmartDashboard.putNumber("Arm speed", speed)
         wpilib.SmartDashboard.putNumber("Arm rateLimitedSpeed", rateLimitedSpeed)
 
-        if speed == 0:
+        if rateLimitedSpeed == 0:
             # hold the motor at this position
             self._setPosition(self.motorEncoder.getPosition())
 
