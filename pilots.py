@@ -72,13 +72,13 @@ class Operator:
         return self._controller.a()
 
     def getShootSpeed(self):
-        return self._controller.getRightTriggerAxis()
+        return self._controller.getLeftTriggerAxis()
 
     def getPickup(self):
         return self._controller.b()
 
     def getPickupSpeed(self):
-        return self._controller.getLeftTriggerAxis()
+        return self._controller.getRightTriggerAxis()
 
     def getRaiseArm(self):
         return self._controller.povUp()
@@ -88,3 +88,6 @@ class Operator:
 
     def getArmSpeed(self):
         return calcAxisSpeedWithCurvatureAndDeadzone(self._controller.getLeftY(), 2)
+
+    def getSlowArmSpeed(self):
+        return calcAxisSpeedWithCurvatureAndDeadzone(self._controller.getRightY(), 2)

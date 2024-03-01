@@ -74,6 +74,8 @@ class Arm:
     k_speed_rate_limit_positive = 2
     k_speed_rate_limit_negative = -2
 
+    slow_arm_speed_scale = 0.2
+
     # TODO: Tune all
     k_p = 0.1
     k_i = 0

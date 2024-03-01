@@ -47,7 +47,10 @@ class RobotContainer:
         self.armSubsystem = ArmSubsystem()
         self.armSubsystem.setDefaultCommand(
             RunCommand(
-                lambda: self.armSubsystem.setSpeed(self.operator.getArmSpeed()),
+                lambda: self.armSubsystem.setSpeed(
+                    self.operator.getSlowArmSpeed() * constants.Arm.slow_arm_speed_scale
+                    or self.operator.getArmSpeed()
+                ),
                 self.armSubsystem,
             )
         )
