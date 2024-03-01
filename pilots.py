@@ -71,14 +71,14 @@ class Operator:
     def getShoot(self):
         return self._controller.a()
 
-    # def get_shoot_speed(self):
-    #     return (
-    #         self._controller.getRightTriggerAxis()
-    #         - self._controller.getLeftTriggerAxis()
-    #     )
+    def getShootSpeed(self):
+        return self._controller.getRightTriggerAxis()
 
     def getPickup(self):
         return self._controller.b()
+
+    def getPickupSpeed(self):
+        return self._controller.getLeftTriggerAxis()
 
     def getRaiseArm(self):
         return self._controller.povUp()

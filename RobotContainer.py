@@ -28,7 +28,10 @@ class RobotContainer:
 
         self.pickupSubsystem = PickupSubsystem()
         self.pickupSubsystem.setDefaultCommand(
-            RunCommand(self.pickupSubsystem.stop, self.pickupSubsystem)
+            RunCommand(
+                lambda: self.pickupSubsystem.setSpeed(self.operator.getPickupSpeed()),
+                self.pickupSubsystem,
+            )
         )
         self.conveyorSubsystem = ConveyorSubsystem()
         self.conveyorSubsystem.setDefaultCommand(
