@@ -16,7 +16,7 @@ class Pilots:
     rotationCurvature = 2.0
     rotationDeadzone = 0.075
 
-    controller_deadzone = 0.07
+    controller_deadzone = 0.06
 
 
 class NeoConstants:
@@ -71,13 +71,16 @@ class Drivetrain:
 class Arm:
     k_motor_id = 9
 
+    k_speed_rate_limit_positive = 2
+    k_speed_rate_limit_negative = -2
+
     # TODO: Tune all
     k_p = 0.1
     k_i = 0
     k_d = 0
 
-    k_max_velocity = 1000
-    k_max_acceleration = 500
+    k_max_velocity = 600
+    k_max_acceleration = 300
 
     k_s = 1.0
     k_g = 9.65

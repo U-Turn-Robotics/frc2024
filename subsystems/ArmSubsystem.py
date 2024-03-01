@@ -2,9 +2,11 @@ import rev
 import wpilib
 from commands2 import Subsystem
 from wpimath.controller import ArmFeedforward
+from wpimath.filter import SlewRateLimiter
 from wpimath.units import rotationsPerMinuteToRadiansPerSecond
 
 from constants import Arm
+from utils.utils import sgn
 
 
 class ArmSubsystem(Subsystem):
@@ -16,7 +18,7 @@ class ArmSubsystem(Subsystem):
         )
         self.motor.restoreFactoryDefaults()
         self.motor.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
-        self.motor.setOpenLoopRampRate(0.5)
+        self.motor.setSmartCurrentLimit(60)
 
         self.motorEncoder = self.motor.getEncoder()
         self.motorEncoder.setPositionConversionFactor(Arm.k_encoder_position_per_radian)
@@ -39,6 +41,12 @@ class ArmSubsystem(Subsystem):
 
         # self.armFF = ArmFeedforward(Arm.k_s, Arm.k_g, Arm.k_v, Arm.k_a)
 
+        self.manualSpeedRateLimiter = SlewRateLimiter(
+            Arm.k_speed_rate_limit_positive, Arm.k_speed_rate_limit_negative
+        )
+        wpilib.SmartDashboard.putNumber("Arm speed", 0)
+        wpilib.SmartDashboard.putNumber("Arm rateLimitedSpeed", 0)
+
         self.lastPosition = initialPosition
 
     def periodic(self):
@@ -48,12 +56,12 @@ class ArmSubsystem(Subsystem):
 
         wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
 
-        # self.motorPID.setReference(
-        #     self.lastPosition,
-        #     rev.CANSparkMax.ControlType.kSmartMotion,
-        #     # arbFeedforward=armFFVoltage,
-        #     # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
-        # )
+        self.motorPID.setReference(
+            self.lastPosition,
+            rev.CANSparkMax.ControlType.kSmartMotion,
+            # arbFeedforward=armFFVoltage,
+            # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
+        )
 
     def _setPosition(self, position: float):
         self.lastPosition = position
@@ -62,8 +70,22 @@ class ArmSubsystem(Subsystem):
         return self.motorEncoder.getPosition() + Arm.k_position_offset
 
     def setSpeed(self, speed: float):
-        self.motor.set(speed)
-        # self._setPosition(self.motorEncoder.getPosition())
+        # if the sign of the speed changes, reset the rate limiter
+        if (
+            sgn(self.manualSpeedRateLimiter.lastValue()) != sgn(speed)
+            and abs(speed) > 0.15
+        ):
+            self.manualSpeedRateLimiter.reset(speed)
+
+        rateLimitedSpeed = self.manualSpeedRateLimiter.calculate(speed)
+        self.motor.set(rateLimitedSpeed)
+
+        wpilib.SmartDashboard.putNumber("Arm speed", speed)
+        wpilib.SmartDashboard.putNumber("Arm rateLimitedSpeed", rateLimitedSpeed)
+
+        if speed == 0:
+            # hold the motor at this position
+            self._setPosition(self.motorEncoder.getPosition())
 
     # def setInitialPosition(self):
     #     self._setPosition(Arm.k_position_initial)

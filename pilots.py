@@ -87,4 +87,4 @@ class Operator:
         return self._controller.povDown()
 
     def getArmSpeed(self):
-        return self._controller.getLeftY()
+        return calcAxisSpeedWithCurvatureAndDeadzone(self._controller.getLeftY(), 2)
