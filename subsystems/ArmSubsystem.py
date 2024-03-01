@@ -1,4 +1,5 @@
 import rev
+import wpilib
 from commands2 import Subsystem
 from wpimath.controller import ArmFeedforward
 from wpimath.units import rotationsPerMinuteToRadiansPerSecond
@@ -22,7 +23,8 @@ class ArmSubsystem(Subsystem):
         self.motorEncoder.setVelocityConversionFactor(
             rotationsPerMinuteToRadiansPerSecond(Arm.k_encoder_position_per_radian)
         )
-        self.motorEncoder.setPosition(Arm.k_position_initial)
+        initialPosition = Arm.k_position_initial
+        self.motorEncoder.setPosition(initialPosition)
 
         self.motorPID = self.motor.getPIDController()
         self.motorPID.setP(Arm.k_p)
@@ -35,21 +37,23 @@ class ArmSubsystem(Subsystem):
         self.motorPID.setSmartMotionMaxAccel(Arm.k_max_acceleration)
         self.motorPID.setSmartMotionAllowedClosedLoopError(0)
 
-        self.armFF = ArmFeedforward(Arm.k_s, Arm.k_g, Arm.k_v, Arm.k_a)
+        # self.armFF = ArmFeedforward(Arm.k_s, Arm.k_g, Arm.k_v, Arm.k_a)
 
-        self.lastPosition = 0
+        self.lastPosition = initialPosition
 
     def periodic(self):
-        motorPos = self.motorEncoder.getPosition()
-        motorVel = self.motorEncoder.getVelocity()
-        armFFVoltage = self.armFF.calculate(motorPos, motorVel)
+        # motorPos = self.motorEncoder.getPosition()
+        # motorVel = self.motorEncoder.getVelocity()
+        # armFFVoltage = self.armFF.calculate(motorPos, motorVel)
 
-        self.motorPID.setReference(
-            self.lastPosition,
-            rev.CANSparkMax.ControlType.kSmartMotion,
-            arbFeedforward=armFFVoltage,
-            arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
-        )
+        wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
+
+        # self.motorPID.setReference(
+        #     self.lastPosition,
+        #     rev.CANSparkMax.ControlType.kSmartMotion,
+        #     # arbFeedforward=armFFVoltage,
+        #     # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
+        # )
 
     def _setPosition(self, position: float):
         self.lastPosition = position
@@ -59,7 +63,7 @@ class ArmSubsystem(Subsystem):
 
     def setSpeed(self, speed: float):
         self.motor.set(speed)
-        self._setPosition(self.motorEncoder.getPosition())
+        # self._setPosition(self.motorEncoder.getPosition())
 
     # def setInitialPosition(self):
     #     self._setPosition(Arm.k_position_initial)

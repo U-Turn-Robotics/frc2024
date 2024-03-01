@@ -39,6 +39,12 @@ class RobotContainer:
             RunCommand(self.shooterSubsystem.stop, self.shooterSubsystem)
         )
         self.armSubsystem = ArmSubsystem()
+        self.armSubsystem.setDefaultCommand(
+            RunCommand(
+                lambda: self.armSubsystem.setSpeed(self.operator.getArmSpeed()),
+                self.armSubsystem,
+            )
+        )
 
         self.configureCommands()
 
@@ -61,10 +67,15 @@ class RobotContainer:
                     self.conveyorSubsystem,
                 )
             )
+            .andThen(InstantCommand(lambda: print("shoot tested!!!")))
         )
 
-        self.pickupCommand = RunCommand(
-            self.pickupSubsystem.pickup, self.pickupSubsystem
+        self.pickupCommand = (
+            RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
+            .alongWith(
+                RunCommand(self.conveyorSubsystem.convey, self.conveyorSubsystem)
+            )
+            .andThen(InstantCommand(lambda: print("pickup tested!!!")))
         )
 
     def configureButtonBindings(self):
@@ -90,13 +101,11 @@ class RobotContainer:
     def configureAuto(self):
         NamedCommands.registerCommand(
             "shoot",
-            self.shootCommand.andThen(InstantCommand(lambda: print("shoot tested!!!"))),
+            self.shootCommand,
         )
         NamedCommands.registerCommand(
             "pickup",
-            self.pickupCommand.andThen(
-                InstantCommand(lambda: print("pickup tested!!!"))
-            ),
+            self.pickupCommand,
         )
 
         AutoBuilder.configureLTV(
