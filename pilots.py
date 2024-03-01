@@ -52,7 +52,7 @@ class Driver:
     def getToggleBrakeMode(self):
         return self._controller.start()
 
-    def getVisionTrack(self):
+    def getTrackNoteGamePiece(self):
         return self._controller._hid.getAButton()
 
     def getSnapToClosestPresetPose(self):
@@ -85,3 +85,6 @@ class Operator:
 
     def getLowerArm(self):
         return self._controller.povDown()
+
+    def getArmSpeed(self):
+        return self._controller.getLeftY()
