@@ -1,4 +1,11 @@
-from commands2 import InstantCommand, RunCommand, StartEndCommand
+import wpilib
+from commands2 import (
+    InstantCommand,
+    RunCommand,
+    SequentialCommandGroup,
+    StartEndCommand,
+    WaitCommand,
+)
 from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
 from wpilib import DriverStation, RobotBase
@@ -62,23 +69,29 @@ class RobotContainer:
         self.driveSubsystem.drive()
 
     def configureCommands(self):
-        self.shootCommand = (
-            # RunCommand(lambda: self.armSubsystem.setSpeed(-0.2), self.armSubsystem)
+        wpilib.SmartDashboard.putNumber("shootCommand step", -1)
+
+        self.shootCommand = SequentialCommandGroup(
             StartEndCommand(
                 lambda: self.armSubsystem.setSpeed(-0.1),
-                lambda: not self.armSubsystem.limitSwitch.get(),
+                self.armSubsystem.atLowerLimit,
                 self.armSubsystem,
-            )
-            .withTimeout(2)
-            .andThen(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
-            .withTimeout(0.5)
-            .andThen(
-                RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem).alongWith(
-                    RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem)
-                )
-            )
-            .withTimeout(1)
-            .andThen(InstantCommand(lambda: print("shoot tested!!!")))
+            ).withTimeout(2),
+            InstantCommand(
+                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 1)
+            ),
+            RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem).withTimeout(
+                0.5
+            ),
+            InstantCommand(
+                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 2)
+            ),
+            RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
+            .alongWith(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
+            .withTimeout(1),
+            InstantCommand(
+                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 3)
+            ),
         )
 
         self.pickupCommand = RunCommand(
@@ -148,14 +161,22 @@ class RobotContainer:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def getAutoCommand(self):
-        # (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
-        # if RobotBase.isSimulation():
-        #     if self.startingPose:
-        #         if self.shouldFlipAuto():
-        #             self.startingPose = flipFieldPose(self.startingPose)
-        #         print(f"Starting pose: {self.startingPose}")
-        #         self.driveSubsystem.resetPose(self.startingPose)
-        # return auto
-        return RunCommand(
-            lambda: self.driveSubsystem.drivetrain.arcadeDrive(0.5, 0, False)
-        ).withTimeout(1)
+        (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
+        if RobotBase.isSimulation():
+            if self.startingPose:
+                if self.shouldFlipAuto():
+                    self.startingPose = flipFieldPose(self.startingPose)
+                print(f"Starting pose: {self.startingPose}")
+                self.driveSubsystem.resetPose(self.startingPose)
+
+        initialDefaultCommand = self.driveSubsystem.getDefaultCommand()
+        self.driveSubsystem.setDefaultCommand(
+            # feeds the DifferentialDrive to make it stop complaining, "Output not updated often enough."
+            RunCommand(self.driveSubsystem.stop, self.driveSubsystem)
+        )
+        if initialDefaultCommand:
+            return auto.finallyDo(
+                lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
+            )
+        else:
+            return auto
