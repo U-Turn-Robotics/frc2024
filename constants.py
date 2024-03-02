@@ -24,7 +24,8 @@ class NeoConstants:
 
 
 class Drivetrain:
-    speed_scale = 1
+    speed_scale = 0.75
+    turn_speed_scale = 0.5
 
     k_left_motor1_port = 2
     k_left_motor2_port = 3
