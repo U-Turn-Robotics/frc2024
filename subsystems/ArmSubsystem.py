@@ -68,12 +68,12 @@ class ArmSubsystem(Subsystem):
             self._setPosition(0)
             self.limitSwitchTriggered = True
         else:
-            self.motorPID.setReference(
-                self.lastPosition,
-                rev.CANSparkMax.ControlType.kSmartMotion,
-                # arbFeedforward=armFFVoltage,
-                # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
-            )
+            # self.motorPID.setReference(
+            #     self.lastPosition,
+            #     rev.CANSparkMax.ControlType.kSmartMotion,
+            #     # arbFeedforward=armFFVoltage,
+            #     # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
+            # )
             self.limitSwitchTriggered = False
 
         # TODO test that this resets to 0 when the limit switch is triggered,
