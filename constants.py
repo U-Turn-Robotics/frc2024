@@ -75,8 +75,8 @@ class Arm:
     k_speed_rate_limit_positive = 2
     k_speed_rate_limit_negative = -2
 
-    arm_speed_scale = 0.25
-    slow_arm_speed_scale = 0.1
+    arm_speed_scale = 0.36
+    slow_arm_speed_scale = 0.18
 
     # TODO: Tune all
     k_p = 0.1
@@ -97,7 +97,7 @@ class Arm:
     k_position_offset = k_position_initial
     k_preset_positions = [k_position_initial, k_position_up, k_position_down]
 
-    k_gear_reduction = 48
+    k_gear_reduction = 192
     k_encoder_pulses_per_revolution = (
         NeoConstants.k_units_per_revolution * k_gear_reduction
     )
