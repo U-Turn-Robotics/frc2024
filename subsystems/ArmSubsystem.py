@@ -40,6 +40,7 @@ class ArmSubsystem(Subsystem):
         self.motorPID.setSmartMotionAllowedClosedLoopError(0)
 
         self.limitSwitch = wpilib.DigitalInput(0)
+        self.limitSwitchTriggered = False
 
         # self.armFF = ArmFeedforward(Arm.k_s, Arm.k_g, Arm.k_v, Arm.k_a)
 
@@ -51,19 +52,21 @@ class ArmSubsystem(Subsystem):
 
         self.lastPosition = initialPosition
 
+    def atLowerLimit(self):
+        return not self.limitSwitch.get()
+
     def periodic(self):
         # motorPos = self.motorEncoder.getPosition()
         # motorVel = self.motorEncoder.getVelocity()
         # armFFVoltage = self.armFF.calculate(motorPos, motorVel)
 
-        wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
-
-        limitReached = not self.limitSwitch.get()
+        limitReached = self.atLowerLimit()
         wpilib.SmartDashboard.putNumber("Arm limit", limitReached)
-        if limitReached:
+        if limitReached and not self.limitSwitchTriggered:
             self.motor.stopMotor()
             self.motorEncoder.setPosition(0)
             self._setPosition(0)
+            self.limitSwitchTriggered = True
         else:
             self.motorPID.setReference(
                 self.lastPosition,
@@ -71,6 +74,9 @@ class ArmSubsystem(Subsystem):
                 # arbFeedforward=armFFVoltage,
                 # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
             )
+            self.limitSwitchTriggered = False
+
+        wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
 
     def _setPosition(self, position: float):
         self.lastPosition = position
@@ -92,7 +98,7 @@ class ArmSubsystem(Subsystem):
         wpilib.SmartDashboard.putNumber("Arm speed", speed)
         wpilib.SmartDashboard.putNumber("Arm rateLimitedSpeed", rateLimitedSpeed)
 
-        if rateLimitedSpeed == 0:
+        if rateLimitedSpeed == 0 and not self.atLowerLimit():
             # hold the motor at this position
             self._setPosition(self.motorEncoder.getPosition())
 
