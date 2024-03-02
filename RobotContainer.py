@@ -4,6 +4,7 @@ from commands2 import (
     SequentialCommandGroup,
     StartEndCommand,
 )
+from cscore import CameraServer
 from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
 from wpilib import DriverStation, RobotBase
@@ -63,6 +64,13 @@ class RobotContainer:
         self.configureButtonBindings()
 
     def teleopPeriodic(self):
+        if self.operator.toggleIntakeDirection():
+            self.pickupSubsystem.invert()
+            self.shooterSubsystem.invert()
+        else:
+            self.pickupSubsystem.uninvert()
+            self.shooterSubsystem.uninvert()
+
         self.driveSubsystem.drive()
 
     def configureCamera(self):
@@ -75,7 +83,7 @@ class RobotContainer:
     def configureCommands(self):
         self.shootCommand = SequentialCommandGroup(
             StartEndCommand(
-                lambda: self.armSubsystem.setSpeed(-0.1),
+                lambda: self.armSubsystem.setSpeed(0.1),
                 self.armSubsystem.atLowerLimit,
                 self.armSubsystem,
             ).withTimeout(2),
@@ -83,8 +91,12 @@ class RobotContainer:
                 1
             ),
             RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
-            .alongWith(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
-            .withTimeout(1),
+            .withTimeout(1)
+            .alongWith(
+                RunCommand(
+                    self.shooterSubsystem.shoot, self.shooterSubsystem
+                ).withTimeout(1)
+            ),
         )
 
         self.pickupCommand = RunCommand(
@@ -109,11 +121,9 @@ class RobotContainer:
             self.pickupSubsystem.uninvert()
             self.shooterSubsystem.uninvert()
 
-        self.operator.toggleIntakeDirection().whileTrue(
-            StartEndCommand(
-                invertBoth, uninvertBoth, self.pickupSubsystem, self.shooterSubsystem
-            )
-        )
+        # self.operator.toggleIntakeDirection().whileTrue(
+        #     StartEndCommand(invertBoth, uninvertBoth)
+        # )
 
         self.driver.getToggleFieldOriented().onTrue(
             InstantCommand(self.driveSubsystem.toggleFieldOriented).ignoringDisable(
@@ -162,25 +172,25 @@ class RobotContainer:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def getAutoCommand(self):
-        (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
-        if RobotBase.isSimulation():
-            if self.startingPose:
-                if self.shouldFlipAuto():
-                    self.startingPose = flipFieldPose(self.startingPose)
-                print(f"Starting pose: {self.startingPose}")
-                self.driveSubsystem.resetPose(self.startingPose)
+        # (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
+        # if RobotBase.isSimulation():
+        #     if self.startingPose:
+        #         if self.shouldFlipAuto():
+        #             self.startingPose = flipFieldPose(self.startingPose)
+        #         print(f"Starting pose: {self.startingPose}")
+        #         self.driveSubsystem.resetPose(self.startingPose)
 
-        initialDefaultCommand = self.driveSubsystem.getDefaultCommand()
-        self.driveSubsystem.setDefaultCommand(
-            # feeds the DifferentialDrive to make it stop complaining, "Output not updated often enough."
-            RunCommand(self.driveSubsystem.stop, self.driveSubsystem)
-        )
-        if initialDefaultCommand:
-            return auto.finallyDo(
-                lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
-            )
-        return auto
+        # initialDefaultCommand = self.driveSubsystem.getDefaultCommand()
+        # self.driveSubsystem.setDefaultCommand(
+        #     # feeds the DifferentialDrive to make it stop complaining, "Output not updated often enough."
+        #     RunCommand(self.driveSubsystem.stop, self.driveSubsystem)
+        # )
+        # if initialDefaultCommand:
+        #     return auto.finallyDo(
+        #         lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
+        #     )
+        # return auto
 
-        # return RunCommand(
-        #     lambda: self.driveSubsystem.drivetrain.arcadeDrive(0.5, 0, False)
-        # ).withTimeout(1)
+        return RunCommand(
+            lambda: self.driveSubsystem.drivetrain.arcadeDrive(-0.5, 0, False)
+        ).withTimeout(1)

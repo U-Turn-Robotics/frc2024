@@ -87,7 +87,7 @@ class Operator:
         return self._controller.getRightTriggerAxis()
 
     def toggleIntakeDirection(self):
-        return self._controller.y()
+        return self._controller._hid.getYButton()
 
     # def getRaiseArm(self):
     #     return self._controller.povUp()
