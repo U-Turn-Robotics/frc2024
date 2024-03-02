@@ -90,12 +90,12 @@ class RobotContainer:
     def configureButtonBindings(self):
         self.operator.getShoot().whileTrue(self.shootCommand)
         self.operator.getPickup().whileTrue(self.pickupCommand)
-        self.operator.getRaiseArm().onTrue(
-            InstantCommand(self.armSubsystem.raisePosition, self.armSubsystem)
-        )
-        self.operator.getLowerArm().onTrue(
-            InstantCommand(self.armSubsystem.lowerPosition, self.armSubsystem)
-        )
+        # self.operator.getRaiseArm().onTrue(
+        #     InstantCommand(self.armSubsystem.raisePosition, self.armSubsystem)
+        # )
+        # self.operator.getLowerArm().onTrue(
+        #     InstantCommand(self.armSubsystem.lowerPosition, self.armSubsystem)
+        # )
 
         def invertBoth():
             self.pickupSubsystem.invert()

@@ -83,11 +83,11 @@ class Operator:
     def toggleIntakeDirection(self):
         return self._controller.y()
 
-    def getRaiseArm(self):
-        return self._controller.povUp()
+    # def getRaiseArm(self):
+    #     return self._controller.povUp()
 
-    def getLowerArm(self):
-        return self._controller.povDown()
+    # def getLowerArm(self):
+    #     return self._controller.povDown()
 
     def getArmSpeed(self):
         return calcAxisSpeedWithCurvatureAndDeadzone(self._controller.getLeftY(), 2)
