@@ -65,6 +65,13 @@ class RobotContainer:
     def teleopPeriodic(self):
         self.driveSubsystem.drive()
 
+    def configureCamera(self):
+        usbCam = CameraServer.startAutomaticCapture()
+        usbCam.setExposureManual(0)
+        usbCam.setBrightness(100)
+        usbCam.setFPS(30)
+        usbCam.setResolution(320, 240)
+
     def configureCommands(self):
         self.shootCommand = SequentialCommandGroup(
             StartEndCommand(

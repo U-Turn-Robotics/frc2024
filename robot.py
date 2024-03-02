@@ -14,7 +14,7 @@ class Robot(wp.TimedRobot):
 
     def robotInit(self):
         PortForwarder.getInstance().add(5800, "photonvision.local", 5800)
-        wp.CameraServer.launch()
+
         self.robot = RobotContainer()
 
     def robotPeriodic(self):
