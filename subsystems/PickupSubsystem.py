@@ -20,7 +20,10 @@ class PickupSubsystem(Subsystem):
         self._invert = 1
 
     def invert(self):
-        self._invert *= -1
+        self._invert = -1
+
+    def uninvert(self):
+        self._invert = 1
 
     def pickup(self):
         self.motor.set(constants.Pickup.k_pickup_speed * self._invert)

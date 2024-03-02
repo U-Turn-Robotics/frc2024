@@ -63,8 +63,13 @@ class RobotContainer:
 
     def configureCommands(self):
         self.shootCommand = (
-            RunCommand(lambda: self.armSubsystem.setSpeed(-0.2), self.armSubsystem)
-            .withTimeout(1)
+            # RunCommand(lambda: self.armSubsystem.setSpeed(-0.2), self.armSubsystem)
+            StartEndCommand(
+                lambda: self.armSubsystem.setSpeed(-0.1),
+                lambda: not self.armSubsystem.limitSwitch.get(),
+                self.armSubsystem,
+            )
+            .withTimeout(2)
             .andThen(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
             .withTimeout(0.5)
             .andThen(
@@ -94,8 +99,14 @@ class RobotContainer:
             self.pickupSubsystem.invert()
             self.shooterSubsystem.invert()
 
-        self.operator.toggleIntakeDirection().onTrue(
-            InstantCommand(invertBoth, self.pickupSubsystem, self.shooterSubsystem)
+        def uninvertBoth():
+            self.pickupSubsystem.uninvert()
+            self.shooterSubsystem.uninvert()
+
+        self.operator.toggleIntakeDirection().whileTrue(
+            StartEndCommand(
+                invertBoth, uninvertBoth, self.pickupSubsystem, self.shooterSubsystem
+            )
         )
 
         self.driver.getToggleFieldOriented().onTrue(
@@ -137,11 +148,14 @@ class RobotContainer:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def getAutoCommand(self):
-        (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
-        if RobotBase.isSimulation():
-            if self.startingPose:
-                if self.shouldFlipAuto():
-                    self.startingPose = flipFieldPose(self.startingPose)
-                print(f"Starting pose: {self.startingPose}")
-                self.driveSubsystem.resetPose(self.startingPose)
-        return auto
+        # (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
+        # if RobotBase.isSimulation():
+        #     if self.startingPose:
+        #         if self.shouldFlipAuto():
+        #             self.startingPose = flipFieldPose(self.startingPose)
+        #         print(f"Starting pose: {self.startingPose}")
+        #         self.driveSubsystem.resetPose(self.startingPose)
+        # return auto
+        return RunCommand(
+            lambda: self.driveSubsystem.drivetrain.arcadeDrive(0.5, 0, False)
+        ).withTimeout(1)

@@ -3,7 +3,6 @@ import wpilib as wp
 from commands2 import Subsystem
 
 import constants
-import constants
 
 
 class ShooterSubsystem(Subsystem):
@@ -29,7 +28,10 @@ class ShooterSubsystem(Subsystem):
         self._invert = 1
 
     def invert(self):
-        self._invert *= -1
+        self._invert = -1
+
+    def uninvert(self):
+        self._invert = 1
 
     def setSpeed(self, speed: float):
         self.shooter.set(speed * self._invert)
