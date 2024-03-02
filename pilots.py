@@ -52,6 +52,12 @@ class Driver:
     def getToggleBrakeMode(self):
         return self._controller.start()
 
+    def cycleAutoSelectorUp(self):
+        return self._controller.povUp()
+
+    def cycleAutoSelectorDown(self):
+        return self._controller.povDown()
+
     def getTrackNoteGamePiece(self):
         return self._controller._hid.getAButton()
 
