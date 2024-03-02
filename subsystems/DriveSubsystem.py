@@ -290,7 +290,11 @@ class DriveSubsystem(Subsystem):
         if abs(turnSpeed) > 0:
             self.lastTurnAngle = self.angle
         curvatureDrive = True
-        return (speed, turnSpeed, curvatureDrive)
+        return (
+            speed * constants.Drivetrain.speed_scale,
+            turnSpeed * constants.Drivetrain.turn_speed_scale,
+            curvatureDrive,
+        )
 
     def fieldOrientedDrive(self):
         speed = self.driver.getSpeed()
@@ -309,7 +313,10 @@ class DriveSubsystem(Subsystem):
             # if not self.turn_controller.atSetpoint():
             #     speed = 0
 
-        return (-speed * constants.Drivetrain.speed_scale, turnSpeed)
+        return (
+            -speed * constants.Drivetrain.speed_scale,
+            turnSpeed * constants.Drivetrain.turn_speed_scale,
+        )
 
     def visionTrackNote(self):
         self.noteTrackerCamera.enableTracking()
