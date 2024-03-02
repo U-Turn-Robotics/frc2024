@@ -69,29 +69,18 @@ class RobotContainer:
         self.driveSubsystem.drive()
 
     def configureCommands(self):
-        wpilib.SmartDashboard.putNumber("shootCommand step", -1)
-
         self.shootCommand = SequentialCommandGroup(
             StartEndCommand(
                 lambda: self.armSubsystem.setSpeed(-0.1),
                 self.armSubsystem.atLowerLimit,
                 self.armSubsystem,
             ).withTimeout(2),
-            InstantCommand(
-                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 1)
-            ),
             RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem).withTimeout(
                 0.5
-            ),
-            InstantCommand(
-                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 2)
             ),
             RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
             .alongWith(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
             .withTimeout(1),
-            InstantCommand(
-                lambda: wpilib.SmartDashboard.putNumber("shootCommand step", 3)
-            ),
         )
 
         self.pickupCommand = RunCommand(
