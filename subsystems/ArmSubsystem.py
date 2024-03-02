@@ -76,6 +76,8 @@ class ArmSubsystem(Subsystem):
             )
             self.limitSwitchTriggered = False
 
+        # TODO test that this resets to 0 when the limit switch is triggered,
+        # else make a reset method that adds a custom offset to self.getPosition()
         wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
 
     def _setPosition(self, position: float):
