@@ -76,7 +76,7 @@ class RobotContainer:
                 self.armSubsystem,
             ).withTimeout(2),
             RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem).withTimeout(
-                0.5
+                1
             ),
             RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
             .alongWith(RunCommand(self.shooterSubsystem.shoot, self.shooterSubsystem))
@@ -167,5 +167,4 @@ class RobotContainer:
             return auto.finallyDo(
                 lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
             )
-        else:
-            return auto
+        return auto
