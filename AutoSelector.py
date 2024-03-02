@@ -11,14 +11,15 @@ from wpimath.geometry import Pose2d
 class AutoSelector:
     def __init__(self):
         self.autoSelector = wp.SendableChooser()
-        autos = AutoSelector._findAutos()
+        self.autos = list(AutoSelector._findAutos().items())
+        self.autoIdxSelected = 0
 
         # TODO make a better way to find the default auto
         # by getting the pose of the robot from the camera as it's disabled, use the auto with the closest starting pose
-        (autoName, (_, defaultAuto)) = self.getClosestAuto(autos, Pose2d(0, 0, 0))
+        (autoName, (_, defaultAuto)) = self.getClosestAuto(self.autos, Pose2d(0, 0, 0))
         self.autoSelector.setDefaultOption(autoName, defaultAuto)
 
-        for autoName, auto in autos.items():
+        for autoName, auto in self.autos:
             if auto is defaultAuto:
                 continue
             self.autoSelector.addOption(autoName, auto)
@@ -48,14 +49,26 @@ class AutoSelector:
 
         return autos
 
+    def cycleUp(self):
+        self.autoIdxSelected = (self.autoIdxSelected - 1) % len(self.autos)
+        (autoName, auto) = self.autos[self.autoIdxSelected]
+        self.autoSelector.setDefaultOption(autoName, auto)
+
+    def cycleDown(self):
+        self.autoIdxSelected = (self.autoIdxSelected + 1) % len(self.autos)
+        (autoName, auto) = self.autos[self.autoIdxSelected]
+        self.autoSelector.setDefaultOption(autoName, auto)
+
     def getClosestAuto(
         self,
-        autos: typing.Dict[str, typing.Tuple[Pose2d, PathPlannerAuto]],
+        autos: typing.List[typing.Tuple[str, typing.Tuple[Pose2d, PathPlannerAuto]]],
         pose: Pose2d,
     ) -> typing.Tuple[str, typing.Tuple[Pose2d | None, PathPlannerAuto]]:
         closestAuto = None
         closestDistance = float("inf")
-        for autoName, auto in autos.items():
+        print("autos!!!")
+        print(autos)
+        for autoName, auto in autos:
             autoPose = auto[0]
             if autoPose is None:
                 continue

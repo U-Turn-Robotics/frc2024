@@ -60,10 +60,10 @@ class RobotContainer:
 
         self.configureCommands()
 
-        self.configureButtonBindings()
-
         self.configureAuto()
         self.startingPose = None
+
+        self.configureButtonBindings()
 
     def teleopPeriodic(self):
         self.driveSubsystem.drive()
@@ -112,13 +112,21 @@ class RobotContainer:
         )
 
         self.driver.getToggleFieldOriented().onTrue(
-            InstantCommand(self.driveSubsystem.toggleFieldOriented)
+            InstantCommand(self.driveSubsystem.toggleFieldOriented).ignoringDisable(
+                True
+            )
         )
         self.driver.getResetAngle().onTrue(
-            InstantCommand(self.driveSubsystem.resetGyro)
+            InstantCommand(self.driveSubsystem.resetGyro).ignoringDisable(True)
         )
         self.driver.getToggleBrakeMode().onTrue(
-            InstantCommand(self.driveSubsystem.toggleBrakeMode)
+            InstantCommand(self.driveSubsystem.toggleBrakeMode).ignoringDisable(True)
+        )
+        self.driver.cycleAutoSelectorUp().onTrue(
+            InstantCommand(self.autoSelector.cycleUp).ignoringDisable(True)
+        )
+        self.driver.cycleAutoSelectorDown().onTrue(
+            InstantCommand(self.autoSelector.cycleDown).ignoringDisable(True)
         )
 
     def configureAuto(self):
