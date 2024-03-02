@@ -59,7 +59,7 @@ class ArmSubsystem(Subsystem):
         wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
 
         limitReached = not self.limitSwitch.get()
-        wpilib.SmartDashboard.putNumber("armlimit", limitReached)
+        wpilib.SmartDashboard.putNumber("Arm limit", limitReached)
         if limitReached:
             self.motor.stopMotor()
             self.motorEncoder.setPosition(0)
