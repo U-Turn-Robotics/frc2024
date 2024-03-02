@@ -39,6 +39,8 @@ class ArmSubsystem(Subsystem):
         self.motorPID.setSmartMotionMaxAccel(Arm.k_max_acceleration)
         self.motorPID.setSmartMotionAllowedClosedLoopError(0)
 
+        self.limitSwitch = wpilib.DigitalInput(0)
+
         # self.armFF = ArmFeedforward(Arm.k_s, Arm.k_g, Arm.k_v, Arm.k_a)
 
         self.manualSpeedRateLimiter = SlewRateLimiter(
@@ -56,12 +58,19 @@ class ArmSubsystem(Subsystem):
 
         wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
 
-        self.motorPID.setReference(
-            self.lastPosition,
-            rev.CANSparkMax.ControlType.kSmartMotion,
-            # arbFeedforward=armFFVoltage,
-            # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
-        )
+        limitReached = not self.limitSwitch.get()
+        wpilib.SmartDashboard.putNumber("armlimit", limitReached)
+        if limitReached:
+            self.motor.stopMotor()
+            self.motorEncoder.setPosition(0)
+            self._setPosition(0)
+        else:
+            self.motorPID.setReference(
+                self.lastPosition,
+                rev.CANSparkMax.ControlType.kSmartMotion,
+                # arbFeedforward=armFFVoltage,
+                # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
+            )
 
     def _setPosition(self, position: float):
         self.lastPosition = position
