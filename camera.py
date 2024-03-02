@@ -9,21 +9,26 @@ import utils.PhotonUtils as PhotonUtils
 
 
 class AprilTagCamera:
-    def __init__(self):
-        self.camera = PhotonCamera(constants.Cameras.april_tag_camera_name)
+    def __init__(self, disabled=False):
+        self.disabled = disabled
+        if not disabled:
+            self.camera = PhotonCamera(constants.Cameras.april_tag_camera_name)
 
-        aprilTagField = robotpy_apriltag.loadAprilTagLayoutField(
-            robotpy_apriltag.AprilTagField.k2024Crescendo
-        )
+            aprilTagField = robotpy_apriltag.loadAprilTagLayoutField(
+                robotpy_apriltag.AprilTagField.k2024Crescendo
+            )
 
-        self.poseEstimator = PhotonPoseEstimator(
-            aprilTagField,
-            PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-            self.camera,
-            constants.Cameras.robot_to_april_tag_cam,
-        )
+            self.poseEstimator = PhotonPoseEstimator(
+                aprilTagField,
+                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                self.camera,
+                constants.Cameras.robot_to_april_tag_cam,
+            )
 
     def getEstimatedPose(self, referencePose: Pose2d, robotSpeeds: ChassisSpeeds):
+        if self.disabled:
+            return (None, None)
+
         self.poseEstimator.referencePose = referencePose
 
         if not self.camera.isConnected():
@@ -54,16 +59,24 @@ class AprilTagCamera:
 
 
 class NoteTrackerCamera:
-    def __init__(self):
+    def __init__(self, disabled=False):
+        self.disabled = disabled
         self.camera = PhotonCamera(constants.Cameras.note_tracker_camera_name)
 
     def enableTracking(self):
+        if self.disabled:
+            return
         self.camera.setDriverMode(False)
 
     def disableTracking(self):
+        if self.disabled:
+            return
         self.camera.setDriverMode(True)
 
     def getNotePosition(self):
+        if self.disabled:
+            return (None, None)
+
         if not self.camera.isConnected():
             return (None, None)
 

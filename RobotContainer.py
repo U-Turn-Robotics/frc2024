@@ -1,10 +1,8 @@
-import wpilib
 from commands2 import (
     InstantCommand,
     RunCommand,
     SequentialCommandGroup,
     StartEndCommand,
-    WaitCommand,
 )
 from pathplannerlib.auto import AutoBuilder, NamedCommands, ReplanningConfig
 from pathplannerlib.geometry_util import flipFieldPose
@@ -15,7 +13,6 @@ from AutoSelector import AutoSelector
 from camera import AprilTagCamera, NoteTrackerCamera
 from pilots import Driver, Operator
 from subsystems.ArmSubsystem import ArmSubsystem
-from subsystems.ConveyorSubsystem import ConveyorSubsystem
 from subsystems.DriveSubsystem import DriveSubsystem
 from subsystems.PickupSubsystem import PickupSubsystem
 from subsystems.ShooterSubsystem import ShooterSubsystem
@@ -23,8 +20,8 @@ from subsystems.ShooterSubsystem import ShooterSubsystem
 
 class RobotContainer:
     def __init__(self) -> None:
-        self.aprilTagCamera = AprilTagCamera()
-        self.noteTrackerCamera = NoteTrackerCamera()
+        self.aprilTagCamera = AprilTagCamera(disabled=True)
+        self.noteTrackerCamera = NoteTrackerCamera(disabled=True)
 
         self.driver = Driver()
         self.driveSubsystem = DriveSubsystem(
@@ -176,3 +173,7 @@ class RobotContainer:
                 lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
             )
         return auto
+
+        # return RunCommand(
+        #     lambda: self.driveSubsystem.drivetrain.arcadeDrive(0.5, 0, False)
+        # ).withTimeout(1)
