@@ -63,6 +63,8 @@ class RobotContainer:
 
         self.configureButtonBindings()
 
+        self.configureCamera()
+
     def teleopPeriodic(self):
         if self.operator.toggleIntakeDirection():
             self.pickupSubsystem.invert()
@@ -75,7 +77,8 @@ class RobotContainer:
 
     def configureCamera(self):
         usbCam = CameraServer.startAutomaticCapture()
-        usbCam.setExposureManual(0)
+        # usbCam.setExposureAuto()
+        usbCam.setExposureManual(35)
         usbCam.setBrightness(100)
         usbCam.setFPS(30)
         usbCam.setResolution(320, 240)
