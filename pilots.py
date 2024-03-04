@@ -28,9 +28,8 @@ class Driver:
     def getArcadeDriveSpeed(self):
         return calcAxisSpeedWithCurvatureAndDeadzone(
             self._controller.getLeftY(),
-            c=2,
+            c=3,
             b=0,
-            dz=constants.Pilots.controller_deadzone,
         )
 
     def getArcadeDriveRotation(self):
@@ -88,6 +87,12 @@ class Operator:
 
     def toggleIntakeDirection(self):
         return self._controller._hid.getYButton()
+
+    def getResetArmPosition(self):
+        return self._controller.x()
+
+    def getGoToShootPositionPressed(self):
+        return self._controller._hid.getLeftBumperPressed()
 
     # def getRaiseArm(self):
     #     return self._controller.povUp()

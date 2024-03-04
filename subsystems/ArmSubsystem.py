@@ -68,17 +68,20 @@ class ArmSubsystem(Subsystem):
             self._setPosition(0)
             self.limitSwitchTriggered = True
         else:
-            # self.motorPID.setReference(
-            #     self.lastPosition,
-            #     rev.CANSparkMax.ControlType.kSmartMotion,
-            #     # arbFeedforward=armFFVoltage,
-            #     # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
-            # )
+            self.motorPID.setReference(
+                self.lastPosition,
+                rev.CANSparkMax.ControlType.kSmartMotion,
+                # arbFeedforward=armFFVoltage,
+                # arbFFUnits=rev.SparkMaxPIDController.ArbFFUnits.kVoltage,
+            )
             self.limitSwitchTriggered = False
 
         # TODO test that this resets to 0 when the limit switch is triggered,
         # else make a reset method that adds a custom offset to self.getPosition()
         wpilib.SmartDashboard.putNumber("Arm position", self.motorEncoder.getPosition())
+
+    def zeroPosition(self):
+        self.motorEncoder.setPosition(0)
 
     def _setPosition(self, position: float):
         self.lastPosition = position
@@ -112,6 +115,9 @@ class ArmSubsystem(Subsystem):
 
     # def setDownPosition(self):
     #     self._setPosition(Arm.k_position_down)
+
+    def setShootPosition(self):
+        self._setPosition(Arm.k_position_shoot)
 
     def _movePosition(self, positionDelta: int):
         presetPositionIndex = (

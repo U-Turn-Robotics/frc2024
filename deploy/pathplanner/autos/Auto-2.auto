@@ -22,12 +22,6 @@
           "data": {
             "pathName": "2-ToFirst"
           }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "pickup"
-          }
         }
       ]
     }

@@ -66,6 +66,9 @@ class RobotContainer:
         self.configureCamera()
 
     def teleopPeriodic(self):
+        if self.operator.getGoToShootPositionPressed():
+            self.armSubsystem.setShootPosition()
+
         if self.operator.toggleIntakeDirection():
             self.pickupSubsystem.invert()
             self.shooterSubsystem.invert()
@@ -84,6 +87,10 @@ class RobotContainer:
         usbCam.setResolution(320, 240)
 
     def configureCommands(self):
+        self.zeroArmPositionCommand = InstantCommand(
+            self.armSubsystem.zeroPosition
+        ).ignoringDisable(True)
+
         self.shootCommand = SequentialCommandGroup(
             StartEndCommand(
                 lambda: self.armSubsystem.setSpeed(0.1),
@@ -94,13 +101,13 @@ class RobotContainer:
                 1
             ),
             RunCommand(self.pickupSubsystem.pickup, self.pickupSubsystem)
-            .withTimeout(1)
             .alongWith(
                 RunCommand(
                     self.shooterSubsystem.shoot, self.shooterSubsystem
                 ).withTimeout(1)
-            ),
-        )
+            )
+            .withTimeout(1),
+        ).withTimeout(4 + 0.5)
 
         self.pickupCommand = RunCommand(
             self.pickupSubsystem.pickup, self.pickupSubsystem
@@ -115,18 +122,7 @@ class RobotContainer:
         # self.operator.getLowerArm().onTrue(
         #     InstantCommand(self.armSubsystem.lowerPosition, self.armSubsystem)
         # )
-
-        def invertBoth():
-            self.pickupSubsystem.invert()
-            self.shooterSubsystem.invert()
-
-        def uninvertBoth():
-            self.pickupSubsystem.uninvert()
-            self.shooterSubsystem.uninvert()
-
-        # self.operator.toggleIntakeDirection().whileTrue(
-        #     StartEndCommand(invertBoth, uninvertBoth)
-        # )
+        self.operator.getResetArmPosition().onTrue(self.zeroArmPositionCommand)
 
         self.driver.getToggleFieldOriented().onTrue(
             InstantCommand(self.driveSubsystem.toggleFieldOriented).ignoringDisable(
@@ -156,15 +152,15 @@ class RobotContainer:
             self.pickupCommand,
         )
 
-        AutoBuilder.configureLTV(
+        AutoBuilder.configureRamsete(
             self.driveSubsystem.getPose,
             self.driveSubsystem.resetPose,
             self.driveSubsystem.getSpeeds,
             self.driveSubsystem.setSpeeds,
-            (0.0625, 0.125, 2.0),  # qelems/error tolerances
-            (1.0, 2.0),  # relems/control effort
+            # (0.0625, 0.125, 2.0),  # qelems/error tolerances
+            # (1.0, 2.0),  # relems/control effort
             constants.Robot.period,
-            ReplanningConfig(enableDynamicReplanning=True),
+            ReplanningConfig(enableDynamicReplanning=False),
             self.shouldFlipAuto,
             self.driveSubsystem,
         )
@@ -175,25 +171,25 @@ class RobotContainer:
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def getAutoCommand(self):
-        # (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
-        # if RobotBase.isSimulation():
-        #     if self.startingPose:
-        #         if self.shouldFlipAuto():
-        #             self.startingPose = flipFieldPose(self.startingPose)
-        #         print(f"Starting pose: {self.startingPose}")
-        #         self.driveSubsystem.resetPose(self.startingPose)
+        (self.startingPose, auto) = self.autoSelector.getSelectedAuto()
+        if RobotBase.isSimulation():
+            if self.startingPose:
+                if self.shouldFlipAuto():
+                    self.startingPose = flipFieldPose(self.startingPose)
+                print(f"Starting pose: {self.startingPose}")
+                self.driveSubsystem.resetPose(self.startingPose)
 
-        # initialDefaultCommand = self.driveSubsystem.getDefaultCommand()
-        # self.driveSubsystem.setDefaultCommand(
-        #     # feeds the DifferentialDrive to make it stop complaining, "Output not updated often enough."
-        #     RunCommand(self.driveSubsystem.stop, self.driveSubsystem)
-        # )
-        # if initialDefaultCommand:
-        #     return auto.finallyDo(
-        #         lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
-        #     )
-        # return auto
+        initialDefaultCommand = self.driveSubsystem.getDefaultCommand()
+        self.driveSubsystem.setDefaultCommand(
+            # feeds the DifferentialDrive to make it stop complaining, "Output not updated often enough."
+            RunCommand(self.driveSubsystem.stop, self.driveSubsystem)
+        )
+        if initialDefaultCommand:
+            return auto.finallyDo(
+                lambda: self.driveSubsystem.setDefaultCommand(initialDefaultCommand)
+            )
+        return auto
 
         return RunCommand(
-            lambda: self.driveSubsystem.drivetrain.arcadeDrive(-0.5, 0, False)
-        ).withTimeout(1)
+            lambda: self.driveSubsystem.drivetrain.arcadeDrive(-0.25, 0, False)
+        ).withTimeout(1.5)

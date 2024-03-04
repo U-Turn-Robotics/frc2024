@@ -24,8 +24,8 @@ class NeoConstants:
 
 
 class Drivetrain:
-    speed_scale = 0.75
-    turn_speed_scale = 0.5
+    speed_scale = 1
+    turn_speed_scale = 0.3
 
     k_left_motor1_port = 2
     k_left_motor2_port = 3
@@ -84,8 +84,8 @@ class Arm:
     k_i = 0
     k_d = 0
 
-    k_max_velocity = 600
-    k_max_acceleration = 300
+    k_max_velocity = 2000
+    k_max_acceleration = 500
 
     k_s = 1.0
     k_g = 9.65
@@ -94,9 +94,9 @@ class Arm:
 
     k_position_initial = math.radians(45)
     k_position_up = math.radians(80)
-    k_position_down = math.radians(0)
+    k_position_shoot = -1.74
     k_position_offset = k_position_initial
-    k_preset_positions = [k_position_initial, k_position_up, k_position_down]
+    # k_preset_positions = [k_position_initial, k_position_up, k_position_shoot]
 
     k_gear_reduction = 192
     k_encoder_pulses_per_revolution = (
@@ -170,7 +170,7 @@ class Robot:
         },
         "floor": {
             "pose": None,
-            "arm_angle": Arm.k_position_down,
+            "arm_angle": Arm.k_position_shoot,
         },
     }
 
